@@ -1,10 +1,7 @@
-#ifndef error_handling_h
-#define error_handling_h
-#include <stdint.h>
-#include <assert.h>
-#include <stdbool.h>
+#ifndef ERROR_HANDLING_H
+#define ERROR_HANDLING_H
 // size_t
-#include <stdlib.h>
+#include <stddef.h>
 #include "david_macros.h"
 #define ERROR_CODES(apply) \
     apply(NO_ERROR, 0) \
@@ -63,55 +60,22 @@
     /*idk man*/ \
     apply(GENERIC_ERROR, 39)\
 
-#ifdef _WIN32
-typedef uint8_t ErrorCode;
-enum {
-#define X(x, v) x = v,
-    ERROR_CODES(X)
-#undef X
-    };
-#else
 typedef enum ErrorCode {
 #define X(x, v) x = v,
     ERROR_CODES(X)
 #undef X
-    } ErrorCode;
-#endif
-
-#define X(x, v) [x] = #x,
-static const char* const ERROR_NAMES[] = {
-    ERROR_CODES(X)
-    };
-#undef X
-
-#define get_error_name(err) ({ERROR_NAMES[err.errored];})
+} ErrorCode;
 
 #define _Errorable_impl(T) T##__Errorable
 #define Errorable(T) struct _Errorable_impl(T)
 #define Errorable_f(T) warn_unused struct _Errorable_impl(T)
 #define Errorable_declare(T) Errorable(T) { T result; ErrorCode errored; }
 //Declare some common types
-typedef void* void_ptr;
 struct _Errorable_impl(void) {
     ErrorCode errored;
-    };
-Errorable_declare(bool);
+};
 Errorable_declare(int);
 Errorable_declare(char);
-Errorable_declare(short);
-Errorable_declare(long);
-Errorable_declare(size_t);
-Errorable_declare(uint8_t);
-Errorable_declare(uint16_t);
-Errorable_declare(uint32_t);
-Errorable_declare(uint64_t);
-Errorable_declare(int8_t);
-Errorable_declare(int16_t);
-Errorable_declare(int32_t);
-Errorable_declare(int64_t);
-Errorable_declare(float);
-Errorable_declare(double);
-Errorable_declare(void_ptr);
 #define Raise(error_value) ({result.errored = error_value; return result;})
 
 #define attempt(maybe) ({   auto const maybe_ = maybe;\
@@ -126,12 +90,4 @@ Errorable_declare(void_ptr);
                                 return result;\
                                 }\
                             ;})
-#define ignore_error(might_err) do{auto UNUSED err = might_err;}while(0)
-
-#define unwrap(error_holder) ({auto err_ = error_holder;\
-                            assert(!err_.errored); \
-                            err_.result;})
-#define force(error_holder) ({auto err_ = error_holder;\
-                            assert(!err_.errored);})
-
 #endif
