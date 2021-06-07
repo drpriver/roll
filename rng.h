@@ -109,7 +109,7 @@ bounded_random(Nonnull(RngState*) rng, uint32_t bound){
         uint32_t r = rng_random32(rng);
         if(r >= threshold){
             uint32_t temp = fast_reduce(r, bound);
-            // auto temp = r % bound;
+            // uint32_t temp = r % bound;
             return temp;
         }
     }

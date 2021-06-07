@@ -54,7 +54,7 @@ Errorable_f(void)
 dice_canonicalize(Nonnull(DiceExpression*) de){
     Errorable(void) result = {};
     for(int i = 1; i < de->count; i++){
-        auto d = &de->data[i];
+        Die* d = &de->data[i];
         if(d->count == 0){
             remove_die_at(de, i);
             i--;
@@ -81,9 +81,9 @@ print_dice_expr(DiceExpression de) {
     int printed = 0;
     for (int i = 0; i < de.count; i++) {
         bool negative = false;
-        auto die = de.data[i];
-        auto count = die.count;
-        auto base  = die.base;
+        Die die = de.data[i];
+        int count = die.count;
+        int base  = die.base;
         if (base == 0 || count == 0)
             continue;
         if (die.count < 0) {
@@ -123,13 +123,13 @@ roll_die(Die die, Nonnull(RngState*) rng) {
     if (die.base == 1)
         return die.count;
     int result = 0;
-    auto count = die.count;
+    int count = die.count;
     if (die.count < 0)
         count = -count;
     else if (die.count == 0)
         return 0;
     for (int i = 0; i < count; ++i) {
-        auto base = die.base;
+        int base = die.base;
         if (base < 0)
             result -= bounded_random(rng, -base)+1;
         else
@@ -205,7 +205,7 @@ integer_from_stack(Nonnull(CharSlice*) stack) {
     while(1) {
         pow++;
         total += attempt(magnitude_char(c, pow));
-        auto d = pop_char(stack);
+        Errorable(char) d = pop_char(stack);
         if(d.errored) break;
         c = d.result;
         }
@@ -240,7 +240,7 @@ struct parse_iterator{
     size_t current_position;
     bool stop;
     int dice_count;
-    };
+};
 
 static
 struct parse_iterator
@@ -424,7 +424,7 @@ check_overflow(Nonnull(DiceExpression*)de){
     Errorable(void) result = {};
     int64_t max_value = 0;
     for(int i = 0; i < de->count; i++){
-        auto d = de->data[i];
+        Die d = de->data[i];
         if(d.base <= 0)
             continue;
         if(d.base == 1 && d.count <= 0)
@@ -439,7 +439,7 @@ check_overflow(Nonnull(DiceExpression*)de){
         }
     int64_t min_value = 0;
     for(int i = 0; i < de->count; i++){
-        auto d = de->data[i];
+        Die d = de->data[i];
         if(d.base >= 0 && !(d.base==1 && d.count < 0) )
             continue;
         int64_t sub_min = 0;
@@ -461,7 +461,7 @@ parse_dice_expression(LongString input, Nonnull(DiceExpression*) de) {
     Errorable(void) result = {};
     int slots_remaining = MAX_DICE;
     de->count = 0;
-    auto iter = start_parse(input);
+    struct parse_iterator iter = start_parse(input);
     for (Die d = attempt(next_parse(&iter));; d = attempt(next_parse(&iter))){
         if(slots_remaining <= 0) {
             Raise(EXCESSIVE_DICE);
@@ -525,7 +525,7 @@ report_error(ErrorCode e) {
 static
 void
 roll_and_display(DiceExpression de, Nonnull(RngState*) rng) {
-    auto value = roll_dice(de, rng);
+    int64_t value = roll_dice(de, rng);
     fputs("   ", stdout);
     print_dice_expr(de);
     printf(" -> %lld\n", (long long)value);
@@ -545,12 +545,12 @@ verbose_roll_and_display(DiceExpression de, Nonnull(RngState*) rng) {
         if(i > 0) {
             putchar('+');
             }
-        auto die = de.data[i];
-        auto count = die.count;
+        Die die = de.data[i];
+        int count = die.count;
         int base = die.base;
         max += iabs(base) * iabs(count);
         int width = 0;
-        for(auto scratch_base = base; scratch_base; scratch_base/=10) {
+        for(int scratch_base = base; scratch_base; scratch_base/=10) {
             width++;
             }
         if(base == 0 || count == 0) {
@@ -570,7 +570,7 @@ verbose_roll_and_display(DiceExpression de, Nonnull(RngState*) rng) {
             if(j > 0) {
                 putchar('+');
                 }
-            auto roll = roll_die((Die) {.count=1, .base=base}, rng);
+            int64_t roll = roll_die((Die) {.count=1, .base=base}, rng);
             bool rolled_max = false;
             bool rolled_min = false;
             if(iabs(base) == iabs(roll))
@@ -603,7 +603,7 @@ verbose_roll_and_display(DiceExpression de, Nonnull(RngState*) rng) {
             }
         }
     int final_width = 0;
-    for(auto scratch_max = max; scratch_max;scratch_max/=10) {
+    for(int scratch_max = max; scratch_max;scratch_max/=10) {
         final_width++;
         }
     fputs(" -> ", stdout);
@@ -619,13 +619,13 @@ interactive_mode(void) {
     Errorable(void) result = {};
     puts("ctrl-d or \"q\" to exit");
     puts("\"v\" toggles verbose output");
-    puts("\"s\" + anyinput to seed rng");
-    puts("\"sh\" + list of things to shuffle the things (' ', ',', ';') are delims)");
     puts("Enter repeats last die roll");
     enum {INPUT_SIZE=1024};
     char* inp = malloc(INPUT_SIZE);
-    DiceExpression de  = {.data=alloca(sizeof(Die) * MAX_DICE), .count=0, .capacity=MAX_DICE};
-    DiceExpression de2 = {.data=alloca(sizeof(Die) * MAX_DICE), .count=0, .capacity = MAX_DICE};
+    Die _diebuff1[MAX_DICE];
+    Die _diebuff2[MAX_DICE];
+    DiceExpression de  = {.data=_diebuff1, .count=0, .capacity=MAX_DICE};
+    DiceExpression de2 = {.data=_diebuff2, .count=0, .capacity=MAX_DICE};
     bool verbose = false;
     StringBuilder sb = {};
     RngState rng = {};
@@ -638,7 +638,7 @@ interactive_mode(void) {
         sb_reset(&sb);
         sb_write_str(&sb, inp, strlen(inp));
         sb_strip(&sb);
-        auto input = sb_borrow(&sb);
+        LongString input = sb_borrow(&sb);
         if(input.text[0] == 'q' && input.length == 1)
             break;
         if(input.text[0] == 'v' && input.length == 1){
@@ -654,7 +654,7 @@ interactive_mode(void) {
             #endif
             }
         else {
-            auto parsed_expression = parse_dice_expression(input, &de2);
+            Errorable(void) parsed_expression = parse_dice_expression(input, &de2);
             if(parsed_expression.errored) {
                 report_error(parsed_expression.errored);
                 continue;
@@ -678,7 +678,7 @@ interactive_mode(void) {
 
 int main(int argc, const char** argv) {
     if(argc < 2){
-        auto e = interactive_mode().errored;
+        ErrorCode e = interactive_mode().errored;
         if (e){
             report_error(e);
             return e;
@@ -691,12 +691,16 @@ int main(int argc, const char** argv) {
         return 64;
         }
     StringBuilder sb = {};
-    sb_join(&sb, " ", argv+1, input_count);
+    for(int i = 1; i < argc; i++){
+        if(i != 1)
+            sb_write_str(&sb, " ", 1);
+        sb_write_str(&sb, argv[i], strlen(argv[i]));
+        }
     sb_strip(&sb);
-    auto input = sb_borrow(&sb);
+    LongString input = sb_borrow(&sb);
     Die dice[MAX_DICE];
     DiceExpression de = {.data=dice, .count = 0, .capacity = MAX_DICE};
-    auto e = parse_dice_expression(input, &de).errored;
+    ErrorCode e = parse_dice_expression(input, &de).errored;
     if(e){
         report_error(e);
         return e;
