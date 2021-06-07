@@ -249,6 +249,4 @@ typedef char* _Null_unspecified c_string;
 #define UNUSED
 #endif
 
-#include "dbg_print.h"
-
 #endif
