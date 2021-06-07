@@ -6,7 +6,6 @@
 #include "david_macros.h"
 #include "error_handling.h"
 #include "rng.h"
-#include "slice.h"
 #include "long_string.h"
 #include "StringBuilder.h"
 typedef struct Die {
@@ -14,9 +13,41 @@ typedef struct Die {
     int count;
     } Die;
 Errorable_declare(Die);
-SliceDeclare(Die);
-SliceDeclareImpl(Die);
-typedef Slice(Die) DiceExpression;
+typedef struct DiceExpression {
+    int capacity;
+    int count;
+    Nonnull(Die*) data;
+} DiceExpression;
+
+static inline
+force_inline
+void
+append_die(Nonnull(DiceExpression*)de, Die value){
+    assert(de->capacity > de->count);
+    de->data[de->count++] = value;
+}
+
+static inline
+void
+remove_die_at(Nonnull(DiceExpression*)de, size_t index){
+    assert(index >= 0);
+    assert(de->count);
+    assert(index < de->capacity);
+    if(!--de->count)
+        return;
+    de->data[index] = de->data[de->count];
+    }
+
+typedef struct CharSlice {
+    int capacity;
+    int count;
+    Nonnull(char*) data;
+} CharSlice;
+
+#define iabs(x) _Generic(x, \
+        int: abs,\
+        long: labs,\
+        long long: llabs)(x)
 
 static
 Errorable_f(void)
@@ -25,7 +56,7 @@ dice_canonicalize(Nonnull(DiceExpression*) de){
     for(int i = 1; i < de->count; i++){
         auto d = &de->data[i];
         if(d->count == 0){
-            Slice_remove_at(Die)(de, i);
+            remove_die_at(de, i);
             i--;
             continue;
             }
@@ -35,7 +66,7 @@ dice_canonicalize(Nonnull(DiceExpression*) de){
                 // In theory, we can just add more dice
                 if(__builtin_add_overflow(de->data[j].count, d->count, &de->data[j].count))
                     Raise(OVERFLOWED_VALUE);
-                Slice_remove_at(Die)(de, i);
+                remove_die_at(de, i);
                 i--;
                 break;
                 }
@@ -120,26 +151,26 @@ roll_dice(DiceExpression dice, Nonnull(RngState*) rng) {
     return result;
     }
 
-SliceDeclare(char);
-SliceDeclareImpl(char);
-
 static
 Errorable_f(void)
-push_char(Nonnull(Slice(char)*) stack, char c) {
+push_char(Nonnull(CharSlice*) stack, char c) {
     Errorable(void) result = {};
     if (stack->count >= stack->capacity) {
         Raise(OVERFLOWED_BUFFER);
         }
-    Slice_append(char)(stack, c);
+    assert(stack->capacity > stack->count);
+    stack->data[stack->count++] = c;
     return result;
     }
 
 static
 Errorable_f(char)
-pop_char(Nonnull(Slice(char)*) stack) {
+pop_char(Nonnull(CharSlice*) stack) {
     Errorable(char) result = {};
-    if (stack->count == 0 ) Raise(UNDERFLOWED_BUFFER);
-    result.result = Slice_pop(char)(stack);
+    if(stack->count == 0) Raise(UNDERFLOWED_BUFFER);
+
+    assert(stack->count);
+    result.result = stack->data[--stack->count];
     return result;
     }
 
@@ -166,7 +197,7 @@ magnitude_char(char c, int pow) {
 
 static
 Errorable_f(int)
-integer_from_stack(Nonnull(Slice(char)*) stack) {
+integer_from_stack(Nonnull(CharSlice*) stack) {
     int pow = 0;
     int total = 0;
     Errorable(int) result = {};
@@ -254,7 +285,7 @@ next_parse(Nonnull(struct parse_iterator*) iter) {
     bool infix_symbol = false;
     int count = 0;
     char buffer[BUFFER_SIZE];
-    Slice(char) digit_chars = {
+    CharSlice digit_chars = {
         .data = buffer,
         .count = 0,
         .capacity = BUFFER_SIZE,
@@ -441,7 +472,7 @@ parse_dice_expression(LongString input, Nonnull(DiceExpression*) de) {
             continue;
             }
         slots_remaining--;
-        Slice_append(Die)(de, d);
+        append_die(de, d);
         if(iter.stop) break;
         }
     if(slots_remaining==MAX_DICE) {
@@ -516,8 +547,8 @@ verbose_roll_and_display(DiceExpression de, Nonnull(RngState*) rng) {
             }
         auto die = de.data[i];
         auto count = die.count;
-        auto base = die.base;
-        max += Abs(base) * Abs(count);
+        int base = die.base;
+        max += iabs(base) * iabs(count);
         int width = 0;
         for(auto scratch_base = base; scratch_base; scratch_base/=10) {
             width++;
@@ -542,9 +573,9 @@ verbose_roll_and_display(DiceExpression de, Nonnull(RngState*) rng) {
             auto roll = roll_die((Die) {.count=1, .base=base}, rng);
             bool rolled_max = false;
             bool rolled_min = false;
-            if(Abs(base) == Abs(roll))
+            if(iabs(base) == iabs(roll))
                 rolled_max = true;
-            else if (Abs(roll) == 1)
+            else if (iabs(roll) == 1)
                 rolled_min = true;
             sum+=roll;
             #ifdef ANSI_CODES
@@ -606,7 +637,7 @@ interactive_mode(void) {
         fgets(inp, INPUT_SIZE, stdin);
         fputs(">> ", stdout), fflush(stdout)) {
         sb_reset(&sb);
-        sb_write_cstr(&sb, inp);
+        sb_write_str(&sb, inp, strlen(inp));
         sb_strip(&sb);
         auto input = sb_borrow(&sb);
         if(input.text[0] == 'q' and input.length == 1)
@@ -629,8 +660,11 @@ interactive_mode(void) {
                 report_error(parsed_expression.errored);
                 continue;
                 }
-            else
-                Swap(de, de2);
+            else{
+                DiceExpression temp = de;
+                de = de2;
+                de2 = temp;
+                }
             }
         if(verbose)
             verbose_roll_and_display(de, rng);

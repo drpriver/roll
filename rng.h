@@ -8,9 +8,6 @@ typedef struct RngState {
     uint64_t state;
     uint64_t inc;
 } RngState;
-Errorable_declare(RngState);
-PushDiagnostic();
-SuppressUnusedFunction();
 
 static inline
 uint32_t
@@ -164,28 +161,4 @@ random_chance(Nonnull(RngState*) rng, uint32_t weight_happen, uint32_t total_wei
     return bounded_random(rng, total_weight) < weight_happen;
     }
 
-static inline
-void
-shuffle_indexes(Nonnull(RngState*) rng, uint32_t count, Nonnull(size_t*) indexes){
-    if(count < 2)
-        return;
-    for(int i = 0; i < count-1; i++){
-        int j = bounded_random(rng, count-i)+i;
-        Swap(indexes[i], indexes[j]);
-        }
-    }
-
-// fisher-yates shuffle
-#define shuffle_array(rng_, array_, count_) do { \
-    auto array__ = array_; \
-    auto count__ = count_; \
-    auto rng__ = rng_; \
-    if(count__ > 2){ \
-        for(int i__ = 0; i__ < count__; i__++){ \
-            int j__  = bounded_random(rng__, count__ - i__) + i__; \
-            Swap(array__[i__], array__[j__]); \
-            } \
-        } \
-    } while(0)
-PopDiagnostic();
 #endif

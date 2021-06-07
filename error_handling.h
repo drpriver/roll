@@ -1,7 +1,5 @@
 #ifndef ERROR_HANDLING_H
 #define ERROR_HANDLING_H
-// size_t
-#include <stddef.h>
 #include "david_macros.h"
 #define ERROR_CODES(apply) \
     apply(NO_ERROR, 0) \
@@ -79,13 +77,13 @@ Errorable_declare(char);
 #define Raise(error_value) ({result.errored = error_value; return result;})
 
 #define attempt(maybe) ({   auto const maybe_ = maybe;\
-                            if(unlikely(maybe_.errored)) {\
+                            if(unlikely(maybe_.errored)){\
                                 result.errored = maybe_.errored;\
                                 return result;\
                                 }\
                             maybe_.result;})
 #define attempt_void(maybe) ({ auto const maybe_ = maybe;\
-                            if(unlikely(maybe_.errored)) {\
+                            if(unlikely(maybe_.errored)){\
                                 result.errored = maybe_.errored;\
                                 return result;\
                                 }\

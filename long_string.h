@@ -9,6 +9,4 @@ typedef struct LongString {
     NullUnspec(char*) text;
 } LongString;
 
-
-
 #endif
