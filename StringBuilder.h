@@ -77,7 +77,7 @@ _check_sb_size(Nonnull(StringBuilder*) sb, size_t len){
 static inline
 void
 sb_write_str(Nonnull(StringBuilder*) restrict sb, Nonnull(const char*) restrict str, size_t len){
-    if(not len)
+    if(! len)
         return;
     _check_sb_size(sb, len);
     memcpy(sb->data + sb->cursor, str, len);
@@ -150,7 +150,7 @@ sb_merge(
         int n_strings
     ){
     assert(n_strings >= 0);
-    if(not n_strings)
+    if(! n_strings)
         return;
     size_t* string_lens = alloca(sizeof(*string_lens)*n_strings);
     size_t total_len = 0;
@@ -177,10 +177,10 @@ sb_join(
         int n_strings
     ){
     assert(n_strings >= 0);
-    if(not n_strings)
+    if(! n_strings)
         return;
     auto joiner_len = strlen(joiner);
-    if(not joiner_len){
+    if(! joiner_len){
         sb_merge(sb, strings, n_strings);
         return;
         }

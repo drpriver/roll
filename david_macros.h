@@ -23,9 +23,6 @@
 
 #ifndef __cplusplus
 #define auto __auto_type
-#define and &&
-#define or ||
-#define not !
 #endif
 
 #ifndef __clang__

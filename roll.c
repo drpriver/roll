@@ -84,7 +84,7 @@ print_dice_expr(DiceExpression de) {
         auto die = de.data[i];
         auto count = die.count;
         auto base  = die.base;
-        if (base == 0 or count == 0)
+        if (base == 0 || count == 0)
             continue;
         if (die.count < 0) {
             negative = !negative;
@@ -179,7 +179,7 @@ Errorable_f(int)
 magnitude_char(char c, int pow) {
     Errorable(int) result = {};
     int base = c - '0';
-    if (base > 9 or base < 0) {
+    if (base > 9 || base < 0) {
         Raise(INVALID_SYMBOL);
         }
     if (pow < 0) {
@@ -228,7 +228,7 @@ static
 Errorable_f(Die)
 var_dice(int count, int base) {
     Errorable(Die) result = {};
-    if (count > INT16_MAX or base > INT16_MAX) {
+    if (count > INT16_MAX || base > INT16_MAX) {
         Raise(OVERFLOWED_VALUE);
         }
     result.result = (Die){.count = count, .base=base};
@@ -259,7 +259,7 @@ start_parse(LongString input) {
             if(input.text[position] != 'o') break;
             else continue;
             }
-        if(position==3 or position==4) {
+        if(position==3 || position==4) {
             if(input.text[position] != 'l') break;
             else continue;
             }
@@ -314,7 +314,7 @@ next_parse(Nonnull(struct parse_iterator*) iter) {
                 return result;
             case 'd':
             case 'D':
-                if(infix_symbol or iter->dice_count==1) {
+                if(infix_symbol || iter->dice_count==1) {
                     count = 1;
                     iter->current_position++;
                     goto parse_base;
@@ -323,7 +323,7 @@ next_parse(Nonnull(struct parse_iterator*) iter) {
                     Raise(INFIX_MISSING);
                     }
             case '0' ... '9':
-                if (infix_symbol or iter->dice_count==1) {
+                if (infix_symbol || iter->dice_count==1) {
                     goto parse_count;
                     }
                 else {
@@ -427,7 +427,7 @@ check_overflow(Nonnull(DiceExpression*)de){
         auto d = de->data[i];
         if(d.base <= 0)
             continue;
-        if(d.base == 1 and d.count <= 0)
+        if(d.base == 1 && d.count <= 0)
             continue;
         int64_t sub_max = 0;
         if(__builtin_mul_overflow(d.base, d.count, &sub_max)){
@@ -440,7 +440,7 @@ check_overflow(Nonnull(DiceExpression*)de){
     int64_t min_value = 0;
     for(int i = 0; i < de->count; i++){
         auto d = de->data[i];
-        if(d.base >= 0 and not (d.base==1 and d.count < 0) )
+        if(d.base >= 0 && !(d.base==1 && d.count < 0) )
             continue;
         int64_t sub_min = 0;
         if(__builtin_mul_overflow(d.base, d.count, &sub_min)){
@@ -466,7 +466,7 @@ parse_dice_expression(LongString input, Nonnull(DiceExpression*) de) {
         if(slots_remaining <= 0) {
             Raise(EXCESSIVE_DICE);
             }
-        if(!d.base and !d.count) {
+        if(!d.base && !d.count) {
             if(iter.stop)
                 break;
             continue;
@@ -553,7 +553,7 @@ verbose_roll_and_display(DiceExpression de, Nonnull(RngState*) rng) {
         for(auto scratch_base = base; scratch_base; scratch_base/=10) {
             width++;
             }
-        if(base == 0 or count == 0) {
+        if(base == 0 || count == 0) {
             putchar('0');
             continue;
             }
@@ -598,7 +598,7 @@ verbose_roll_and_display(DiceExpression de, Nonnull(RngState*) rng) {
                 }
             else
                 printf("[%*lld]", width,  (long long)roll);
-            if(rolled_min or rolled_max)
+            if(rolled_min || rolled_max)
                 fputs(reset_coloring, stdout);
             }
         }
@@ -626,11 +626,10 @@ interactive_mode(void) {
     char* inp = malloc(INPUT_SIZE);
     DiceExpression de  = {.data=alloca(sizeof(Die) * MAX_DICE), .count=0, .capacity=MAX_DICE};
     DiceExpression de2 = {.data=alloca(sizeof(Die) * MAX_DICE), .count=0, .capacity = MAX_DICE};
-    auto verbose = false;
+    bool verbose = false;
     StringBuilder sb = {};
-    RngState rng_ = {};
-    auto rng = &rng_;
-    seed_rng(rng);
+    RngState rng = {};
+    seed_rng_auto(&rng);
     fputs(">> ", stdout);
     fflush(stdout);
     for (;
@@ -640,9 +639,9 @@ interactive_mode(void) {
         sb_write_str(&sb, inp, strlen(inp));
         sb_strip(&sb);
         auto input = sb_borrow(&sb);
-        if(input.text[0] == 'q' and input.length == 1)
+        if(input.text[0] == 'q' && input.length == 1)
             break;
-        if(input.text[0] == 'v' and input.length == 1){
+        if(input.text[0] == 'v' && input.length == 1){
             verbose = !verbose;
             continue;
             }
@@ -667,9 +666,9 @@ interactive_mode(void) {
                 }
             }
         if(verbose)
-            verbose_roll_and_display(de, rng);
+            verbose_roll_and_display(de, &rng);
         else
-            roll_and_display(de, rng);
+            roll_and_display(de, &rng);
         }
     puts("");
     sb_destroy(&sb);
@@ -702,9 +701,8 @@ int main(int argc, const char** argv) {
         report_error(e);
         return e;
         }
-    RngState rng_ = {};
-    auto rng = &rng_;
-    seed_rng(rng);
-    roll_and_display(de, rng);
+    RngState rng = {};
+    seed_rng_auto(&rng);
+    roll_and_display(de, &rng);
     return 0;
     }
