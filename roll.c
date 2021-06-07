@@ -8,6 +8,10 @@
 #include "rng.h"
 #include "long_string.h"
 #include "StringBuilder.h"
+
+static inline
+LongString
+get_input_line(void);
 typedef struct Die {
     int base;
     int count;
@@ -627,21 +631,19 @@ interactive_mode(void) {
     DiceExpression de  = {.data=_diebuff1, .count=0, .capacity=MAX_DICE};
     DiceExpression de2 = {.data=_diebuff2, .count=0, .capacity=MAX_DICE};
     bool verbose = false;
-    StringBuilder sb = {};
     RngState rng = {};
     seed_rng_auto(&rng);
-    fputs(">> ", stdout);
-    fflush(stdout);
-    for (;
-        fgets(inp, INPUT_SIZE, stdin);
-        fputs(">> ", stdout), fflush(stdout)) {
-        sb_reset(&sb);
-        sb_write_str(&sb, inp, strlen(inp));
-        sb_strip(&sb);
-        LongString input = sb_borrow(&sb);
-        if(input.text[0] == 'q' && input.length == 1)
+    LongString input = get_input_line();
+    for(;input.text;free((void*)input.text), input=get_input_line()){
+    // for(fputs(">> ", stdout), fflush(stdout);
+        // fgets(inp, INPUT_SIZE, stdin);
+        // fputs(">> ", stdout), fflush(stdout)){
+        // size_t len = strlen(inp);
+        // inp[--len] = '\0';
+        // LongString input = {.length=len, .text=inp};
+        if(input.text[0] == 'q')
             break;
-        if(input.text[0] == 'v' && input.length == 1){
+        if(input.text[0] == 'v'){
             verbose = !verbose;
             continue;
             }
@@ -671,7 +673,6 @@ interactive_mode(void) {
             roll_and_display(de, &rng);
         }
     puts("");
-    sb_destroy(&sb);
     free(inp);
     return result;
     }
@@ -696,7 +697,6 @@ int main(int argc, const char** argv) {
             sb_write_str(&sb, " ", 1);
         sb_write_str(&sb, argv[i], strlen(argv[i]));
         }
-    sb_strip(&sb);
     LongString input = sb_borrow(&sb);
     Die dice[MAX_DICE];
     DiceExpression de = {.data=dice, .count = 0, .capacity = MAX_DICE};
@@ -709,4 +709,19 @@ int main(int argc, const char** argv) {
     seed_rng_auto(&rng);
     roll_and_display(de, &rng);
     return 0;
+    }
+#include "linenoise/linenoise.h"
+#include "linenoise/linenoise.c"
+static inline
+LongString
+get_input_line(void){
+    linenoiseSetMultiLine(1);
+    char* line = linenoise(">> ");
+    size_t len = line? strlen(line) : 0;
+    if(line)
+        linenoiseHistoryAdd(line);
+    return (LongString){
+        .length = len,
+        .text = line,
+        };
     }
