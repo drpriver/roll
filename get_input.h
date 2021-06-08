@@ -31,6 +31,9 @@ typedef long long ssize_t;
 #include "david_macros.h"
 #include "long_string.h"
 
+#ifdef __clang__
+#pragma clang assume_nonnull begin
+#endif
 
 static int get_line_is_init;
 static void get_line_init(void);
@@ -46,12 +49,11 @@ enum {LINE_HISTORY_MAX = 100};
 static LongString input_line_history[LINE_HISTORY_MAX];
 static int input_line_history_count = 0;
 static int input_line_history_cursor = 0;
-enum HistoryDirection {
-    PREVIOUS_LINE,
-    NEXT_LINE,
-};
 struct LineState;
 static void change_history(struct LineState*, int magnitude);
+static void redisplay(struct LineState*);
+static void delete_right(struct LineState*);
+static void insert_char_into_line(struct LineState*, char);
 
 static inline
 ssize_t
@@ -77,7 +79,7 @@ write_data(char*buff, size_t len){
     }
 
 static inline
-void*
+Nullable(void*)
 memdup(const void* src, size_t size){
     if(!size) return NULL;
     void* p = malloc(size);
@@ -107,20 +109,17 @@ void dbg(const char*fmt, ...){
 #endif
 
 static
-LongString
-get_input_line(LongString prompt){
-    char buff[4096];
+ssize_t
+get_input_line(LongString prompt, char* buff, size_t buff_len){
     input_line_history_cursor = input_line_history_count;
-    ssize_t length = get_line_internal(buff, sizeof(buff), prompt);
-    if(length < 0){
-        return (LongString){0, 0};
-    }
-    return (LongString){.length=length, .text=memdup(buff, length+1)};
+    ssize_t length = get_line_internal(buff, buff_len, prompt);
+    return length;
 }
 
 #ifdef _WIN32
 struct TermState {
-    };
+    char c;
+};
 static void enable_raw(struct TermState*ts){
     (void)ts;
     }
@@ -141,9 +140,10 @@ struct LineState {
     size_t cols;
     int history_index;
 };
-static 
-void 
+static
+void
 enable_raw(struct TermState*ts){
+#ifndef _WIN32
     if(tcgetattr(STDIN_FILENO, &ts->orig) == -1)
         return;
     ts->raw = ts->orig;
@@ -173,13 +173,24 @@ enable_raw(struct TermState*ts){
     // Unread input will be discarded.
     if(tcsetattr(STDIN_FILENO, TCSAFLUSH, &ts->raw) < 0)
         return;
+#else
+    (void)ts;
+#endif
     }
-static void disable_raw(struct TermState*ts){
+static
+void
+disable_raw(struct TermState*ts){
+#ifndef _WIN32
     tcsetattr(STDIN_FILENO, TCSAFLUSH, &ts->orig);
+#else
+    (void)ts;
+#endif
 }
 #endif
 
-static ssize_t get_line_internal(char* buff, size_t buffsize, LongString prompt){
+static
+ssize_t
+get_line_internal(char* buff, size_t buffsize, LongString prompt){
     if(!get_line_is_init)
         get_line_init();
     struct TermState termstate;
@@ -190,9 +201,6 @@ static ssize_t get_line_internal(char* buff, size_t buffsize, LongString prompt)
     }
 
 
-static void redisplay(struct LineState*);
-static void delete_right(struct LineState*);
-static void insert_char_into_line(struct LineState*, char);
 static
 ssize_t
 get_line_internal_loop(char* buff, size_t buffsize, LongString prompt){
@@ -277,7 +285,7 @@ get_line_internal_loop(char* buff, size_t buffsize, LongString prompt){
                     char temp = buff[ls.curr_pos-1];
                     buff[ls.curr_pos-1] = buff[ls.curr_pos];
                     buff[ls.curr_pos] = temp;
-                    if (ls.curr_pos != ls.length-1) 
+                    if (ls.curr_pos != ls.length-1)
                         ls.curr_pos++;
                     redisplay(&ls);
                 }
@@ -324,7 +332,7 @@ get_line_internal_loop(char* buff, size_t buffsize, LongString prompt){
                                 break;
                             }
                         }
-                    } 
+                    }
                     else {
                         switch(sequence[1]) {
                         case 'A': // Up
@@ -435,8 +443,8 @@ get_line_internal_loop(char* buff, size_t buffsize, LongString prompt){
     return ls.length;
 }
 
-static 
-void 
+static
+void
 redisplay(struct LineState*ls){
     enum {LINESIZE=1024};
     char seq[LINESIZE];
@@ -512,8 +520,8 @@ redisplay(struct LineState*ls){
     write_data(seq, seq_pos);
 }
 
-static 
-void 
+static
+void
 delete_right(struct LineState* ls){
     if(ls->length > 0 && ls->curr_pos < ls->length) {
         char* buff = ls->buff;
@@ -523,8 +531,8 @@ delete_right(struct LineState* ls){
     }
 }
 
-static 
-void 
+static
+void
 insert_char_into_line(struct LineState* ls, char c){
     if(ls->length >= ls->buffsize)
         return;
@@ -540,8 +548,8 @@ insert_char_into_line(struct LineState* ls, char c){
     ls->buff[++ls->length] = '\0';
     }
 
-static 
-void 
+static
+void
 line_history_push(LongString ls){
     if(!ls.length)
         return; // no empties
@@ -569,8 +577,8 @@ add_line_to_history(LongString line){
     }
 
 
-static 
-void 
+static
+void
 change_history(struct LineState* ls, int magnitude){
     DBG("magnitude: %d\n", magnitude);
     DBG("input_line_history_cursor: %d\n", input_line_history_cursor);
@@ -597,11 +605,54 @@ change_history(struct LineState* ls, int magnitude){
     }
 static void get_line_init(void){
     get_line_is_init = true;
+#ifdef _WIN32
+    // In theory we should open "CONOUT$" instead, but idk.
+
+    // TODO: report errors.
+    HANDLE hnd = GetStdHandle(STD_OUTPUT_HANDLE);
+    DWORD mode;
+    BOOL success = GetConsoleMode(hnd, &mode);
+    if(!success)
+        return
+    mode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING | DISABLE_NEWLINE_AUTO_RETURN;
+    success = SetConsoleMode(hnd, mode);
+    if(!success)
+        return;
+    hnd = GetStdHandle(STD_INPUT_HANDLE);
+    success = GetConsoleMode(hnd, &mode);
+    if(!success)
+        return
+    mode |= ENABLE_VIRTUAL_TERMINAL_INPUT;
+    success = SetConsoleMode(hnd, mode);
+    if(!success)
+        return;
+#endif
     }
-static int 
+
+static int
 get_cols(void){
+#ifdef _WIN32
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    BOOL success = GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
+    if(!success)
+        goto failed;
+    int columns = csbi.srWindow.Right - csbi.srWindow.Left + 1;
+    return columns;
+#else
+    struct winsize ws;
+    if(ioctl(1, TIOCGWINSZ, &ws) == -1)
+        goto failed;
+    if(ws.ws_col == 0)
+        goto failed;
+    return ws.ws_col;
+#endif
+
+failed:
     return 80;
     }
 
+#ifdef __clang__
+#pragma clang assume_nonnull end
+#endif
 
 #endif

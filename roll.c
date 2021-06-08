@@ -1,4 +1,3 @@
-#define ANSI_CODES
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -10,8 +9,8 @@
 #include "StringBuilder.h"
 
 static inline
-LongString
-get_input_line(LongString);
+ssize_t
+get_input_line(LongString prompt, Nonnull(char*) buff, size_t buff_len);
 static inline void add_line_to_history(LongString);
 
 typedef struct Die {
@@ -583,15 +582,9 @@ verbose_roll_and_display(DiceExpression de, Nonnull(RngState*) rng) {
             else if (iabs(roll) == 1)
                 rolled_min = true;
             sum+=roll;
-            #ifdef ANSI_CODES
-                #define max_coloring "\033[92m"
-                #define min_coloring "\033[91m"
-                #define reset_coloring "\033[39;49m"
-            #else
-                #define max_coloring ""
-                #define min_coloring ""
-                #define reset_coloring ""
-            #endif
+            #define max_coloring "\033[92m"
+            #define min_coloring "\033[91m"
+            #define reset_coloring "\033[39;49m"
             if(rolled_max)
                 fputs(max_coloring, stdout);
             else if(rolled_min)
@@ -626,7 +619,7 @@ interactive_mode(void) {
     puts("\"v\" toggles verbose output");
     puts("Enter repeats last die roll");
     enum {INPUT_SIZE=1024};
-    // char inp[INPUT_SIZE];
+    char inp[INPUT_SIZE];
     Die _diebuff1[MAX_DICE];
     Die _diebuff2[MAX_DICE];
     DiceExpression de  = {.data=_diebuff1, .count=0, .capacity=MAX_DICE};
@@ -635,14 +628,8 @@ interactive_mode(void) {
     RngState rng = {};
     seed_rng_auto(&rng);
     LongString prompt = {.length = sizeof(">> ")-1, .text=">> "};
-    LongString input = get_input_line(prompt);
-    for(;input.text;free((void*)input.text), input=get_input_line(prompt)){
-    // for(fputs(">> ", stdout), fflush(stdout);
-        // fgets(inp, INPUT_SIZE, stdin);
-        // fputs(">> ", stdout), fflush(stdout)){
-        // size_t len = strlen(inp);
-        // inp[--len] = '\0';
-        // LongString input = {.length=len, .text=inp};
+    for(ssize_t err_or_len = get_input_line(prompt, inp, INPUT_SIZE);err_or_len >= 0; err_or_len = get_input_line(prompt, inp, INPUT_SIZE)){
+        LongString input = {.length = err_or_len, .text=inp};
         if(input.text[0] == 'q')
             break;
         if(input.text[0] == 'v'){
@@ -650,12 +637,8 @@ interactive_mode(void) {
             continue;
             }
         if(!input.length){
-            #ifdef ANSI_CODES
-                fputs("\033[F", stdout);
-                fflush(stdout);
-            #else
-                ;
-            #endif
+            fputs("\033[F", stdout);
+            fflush(stdout);
             if(!de.count)
                 continue;
             }
