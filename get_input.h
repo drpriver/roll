@@ -54,6 +54,8 @@ static void change_history(struct LineState*, int magnitude);
 static void redisplay(struct LineState*);
 static void delete_right(struct LineState*);
 static void insert_char_into_line(struct LineState*, char);
+static int dump_history(void);
+static int load_history(void);
 
 static inline
 ssize_t
@@ -553,9 +555,11 @@ void
 line_history_push(LongString ls){
     if(!ls.length)
         return; // no empties
-    LongString* last = &input_line_history[input_line_history_count];
-    if(ls.length == last->length && memcmp(ls.text, last->text, ls.length) == 0)
-        return; // Don't allow duplicates
+    if(input_line_history_count){
+        LongString* last = &input_line_history[input_line_history_count-1];
+        if(ls.length == last->length && memcmp(ls.text, last->text, ls.length) == 0)
+            return; // Don't allow duplicates
+    }
     char* copy = memdup(ls.text, ls.length+1);
     if(input_line_history_count == LINE_HISTORY_MAX){
         free(input_line_history[0].text);
@@ -607,7 +611,6 @@ static void get_line_init(void){
     get_line_is_init = true;
 #ifdef _WIN32
     // In theory we should open "CONOUT$" instead, but idk.
-
     // TODO: report errors.
     HANDLE hnd = GetStdHandle(STD_OUTPUT_HANDLE);
     DWORD mode;
@@ -651,6 +654,71 @@ failed:
     return 80;
     }
 
+static 
+void
+get_history_filename(char (*buff)[1024]){
+#ifdef _WIN32
+    BOOL success = SHGetSpecialFolderPathA(
+            (HWND){},
+            &(*buff)[0],
+            CSIDL_MYDOCUMENTS,
+            1
+            );
+    if(!success){
+        return;
+        }
+    strcpy(*buff, "/.dicehistory");
+#else
+    const char* home = getenv("HOME");
+    if(home)
+        snprintf(*buff, sizeof(*buff), "%s/.dicehistory", home);
+#endif
+
+    }
+
+static 
+int 
+dump_history(void){
+    char filename[1024] = ".dicehistory";
+    get_history_filename(&filename);
+    FILE* fp = fopen(filename, "w");
+    if(!fp)
+        return 1;
+    for(int i = 0; i < input_line_history_count; i++){
+        fwrite(input_line_history[i].text, input_line_history[i].length, 1, fp);
+        fputc('\n', fp);
+        }
+    fflush(fp);
+    fclose(fp);
+    return 0;
+    }
+
+static 
+int
+load_history(void){
+    char filename[1024] = ".dicehistory";
+    get_history_filename(&filename);
+    FILE* fp = fopen(filename, "r");
+    if(!fp){
+        return 1;
+        }
+    char buff[1024];
+    for(size_t i = 0; i < input_line_history_count; i++){
+        free(input_line_history[i].text);
+        }
+    input_line_history_count = 0;
+    while(fgets(buff, sizeof(buff), fp)){
+        size_t length = strlen(buff);
+        buff[--length] = '\0';
+        if(!length)
+            continue;
+        char* copy = memdup(buff, length+1);
+        LongString* h = &input_line_history[input_line_history_count++];
+        h->text = copy;
+        h->length = length;
+        }
+    return 0;
+    }
 #ifdef __clang__
 #pragma clang assume_nonnull end
 #endif

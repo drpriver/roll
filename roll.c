@@ -664,9 +664,13 @@ interactive_mode(void) {
     return result;
     }
 
+static int dump_history(void);
+static int load_history(void);
 int main(int argc, const char** argv) {
     if(argc < 2){
+        load_history();
         ErrorCode e = interactive_mode().errored;
+        dump_history();
         if (e){
             report_error(e);
             return e;
