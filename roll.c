@@ -11,7 +11,9 @@
 
 static inline
 LongString
-get_input_line(void);
+get_input_line(LongString);
+static inline void add_line_to_history(LongString);
+
 typedef struct Die {
     int base;
     int count;
@@ -34,9 +36,8 @@ append_die(Nonnull(DiceExpression*)de, Die value){
 static inline
 void
 remove_die_at(Nonnull(DiceExpression*)de, size_t index){
-    assert(index >= 0);
     assert(de->count);
-    assert(index < de->capacity);
+    assert(index < (size_t)de->capacity);
     if(!--de->count)
         return;
     de->data[index] = de->data[de->count];
@@ -149,7 +150,7 @@ static
 int64_t
 roll_dice(DiceExpression dice, Nonnull(RngState*) rng) {
     int64_t result = 0;
-    for (size_t i = 0; i < dice.count; ++i) {
+    for(int i = 0; i < dice.count; ++i){
         result += roll_die(dice.data[i], rng);
         }
     return result;
@@ -530,7 +531,7 @@ static
 void
 roll_and_display(DiceExpression de, Nonnull(RngState*) rng) {
     int64_t value = roll_dice(de, rng);
-    fputs("   ", stdout);
+    fputs("\r   ", stdout);
     print_dice_expr(de);
     printf(" -> %lld\n", (long long)value);
     }
@@ -538,7 +539,7 @@ static
 void
 verbose_roll_and_display(DiceExpression de, Nonnull(RngState*) rng) {
     int sum = 0;
-    fputs("   ", stdout);
+    fputs("\r   ", stdout);
     print_dice_expr(de);
     fputs(" -> ", stdout);
     int max = 0;
@@ -625,7 +626,7 @@ interactive_mode(void) {
     puts("\"v\" toggles verbose output");
     puts("Enter repeats last die roll");
     enum {INPUT_SIZE=1024};
-    char* inp = malloc(INPUT_SIZE);
+    // char inp[INPUT_SIZE];
     Die _diebuff1[MAX_DICE];
     Die _diebuff2[MAX_DICE];
     DiceExpression de  = {.data=_diebuff1, .count=0, .capacity=MAX_DICE};
@@ -633,8 +634,9 @@ interactive_mode(void) {
     bool verbose = false;
     RngState rng = {};
     seed_rng_auto(&rng);
-    LongString input = get_input_line();
-    for(;input.text;free((void*)input.text), input=get_input_line()){
+    LongString prompt = {.length = sizeof(">> ")-1, .text=">> "};
+    LongString input = get_input_line(prompt);
+    for(;input.text;free((void*)input.text), input=get_input_line(prompt)){
     // for(fputs(">> ", stdout), fflush(stdout);
         // fgets(inp, INPUT_SIZE, stdin);
         // fputs(">> ", stdout), fflush(stdout)){
@@ -662,6 +664,7 @@ interactive_mode(void) {
                 continue;
                 }
             else{
+                add_line_to_history(input);
                 DiceExpression temp = de;
                 de = de2;
                 de2 = temp;
@@ -673,7 +676,6 @@ interactive_mode(void) {
             roll_and_display(de, &rng);
         }
     puts("");
-    free(inp);
     return result;
     }
 
@@ -710,18 +712,5 @@ int main(int argc, const char** argv) {
     roll_and_display(de, &rng);
     return 0;
     }
-#include "linenoise/linenoise.h"
-#include "linenoise/linenoise.c"
-static inline
-LongString
-get_input_line(void){
-    linenoiseSetMultiLine(1);
-    char* line = linenoise(">> ");
-    size_t len = line? strlen(line) : 0;
-    if(line)
-        linenoiseHistoryAdd(line);
-    return (LongString){
-        .length = len,
-        .text = line,
-        };
-    }
+
+#include "get_input.h"

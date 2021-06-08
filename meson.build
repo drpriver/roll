@@ -19,6 +19,12 @@ if cc.get_id() == 'clang'
       '-Wno-gnu-empty-struct',
       language : 'c')
 endif
+if cc.get_id() == 'gcc'
+  add_project_arguments(
+    '-Wno-pedantic',
+    language: 'c')
+
+endif
 
 executable('roll',
            'roll.c',
