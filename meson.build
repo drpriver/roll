@@ -17,6 +17,8 @@ if cc.get_id() == 'clang'
       '-Wno-sign-compare',
       '-Wno-language-extension-token',
       '-Wno-gnu-empty-struct',
+      '-Wno-gnu-zero-variadic-macro-arguments',
+      '-Wno-keyword-macro',
       language : 'c')
 endif
 if cc.get_id() == 'gcc'

@@ -103,15 +103,15 @@ void dbg(const char*fmt, ...){
     }
 #define DBG(fmt, ...) dbg("%s:%3d | " fmt, __func__, __LINE__, ##__VA_ARGS__)
 #else
-#define DBG(fmt, ...) (void)0
+#define DBG(...) (void)0
 #endif
 
 static
 LongString
 get_input_line(LongString prompt){
     char buff[4096];
+    input_line_history_cursor = input_line_history_count;
     ssize_t length = get_line_internal(buff, sizeof(buff), prompt);
-    input_line_history_cursor = input_line_history_count - 1;
     if(length < 0){
         return (LongString){0, 0};
     }
@@ -572,13 +572,19 @@ add_line_to_history(LongString line){
 static 
 void 
 change_history(struct LineState* ls, int magnitude){
-    DBG("magnitude: %d\n", direction, magnitude);
-    (void)ls,  (void)magnitude;
+    DBG("magnitude: %d\n", magnitude);
+    DBG("input_line_history_cursor: %d\n", input_line_history_cursor);
+    DBG("input_line_history_count: %d\n", input_line_history_count);
     input_line_history_cursor += magnitude;
     if(input_line_history_cursor < 0)
         input_line_history_cursor = 0;
-    if(input_line_history_cursor >= input_line_history_count)
-        input_line_history_cursor = input_line_history_count - 1;
+    if(input_line_history_cursor >= input_line_history_count){
+        input_line_history_cursor = input_line_history_count;
+        ls->length = 0;
+        ls->curr_pos = 0;
+        ls->buff[ls->length] = '\0';
+        return;
+        }
     if(input_line_history_cursor < 0)
         return;
     LongString old = input_line_history[input_line_history_cursor];
