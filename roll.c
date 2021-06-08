@@ -656,6 +656,8 @@ interactive_mode(void) {
             #else
                 ;
             #endif
+            if(!de.count)
+                continue;
             }
         else {
             Errorable(void) parsed_expression = parse_dice_expression(input, &de2);
