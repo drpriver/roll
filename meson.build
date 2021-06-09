@@ -13,11 +13,6 @@ if cc.get_id() == 'clang'
       '-Wno-gnu-empty-initializer',
       '-Wno-gnu-statement-expression',
       '-Wno-gnu-case-range',
-      '-Wno-extra-semi',
-      '-Wno-sign-compare',
-      '-Wno-language-extension-token',
-      '-Wno-gnu-empty-struct',
-      '-Wno-gnu-zero-variadic-macro-arguments',
       '-Wno-keyword-macro',
       language : 'c')
 endif
