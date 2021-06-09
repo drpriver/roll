@@ -7,11 +7,9 @@
 #include "rng.h"
 #include "long_string.h"
 #include "StringBuilder.h"
+#include "get_input.h"
 
-static inline
-ssize_t
-get_input_line(LongString prompt, Nonnull(char*) buff, size_t buff_len);
-static inline void add_line_to_history(LongString);
+static struct LineHistory history;
 
 typedef struct Die {
     int base;
@@ -628,7 +626,7 @@ interactive_mode(void) {
     RngState rng = {};
     seed_rng_auto(&rng);
     LongString prompt = {.length = sizeof(">> ")-1, .text=">> "};
-    for(ssize_t err_or_len = get_input_line(prompt, inp, INPUT_SIZE);err_or_len >= 0; err_or_len = get_input_line(prompt, inp, INPUT_SIZE)){
+    for(ssize_t err_or_len = get_input_line(&history, prompt, inp, INPUT_SIZE);err_or_len >= 0; err_or_len = get_input_line(&history, prompt, inp, INPUT_SIZE)){
         LongString input = {.length = err_or_len, .text=inp};
         if(input.text[0] == 'q')
             break;
@@ -649,7 +647,7 @@ interactive_mode(void) {
                 continue;
                 }
             else{
-                add_line_to_history(input);
+                add_line_to_history(&history, input);
                 DiceExpression temp = de;
                 de = de2;
                 de2 = temp;
@@ -664,13 +662,11 @@ interactive_mode(void) {
     return result;
     }
 
-static int dump_history(void);
-static int load_history(void);
 int main(int argc, const char** argv) {
     if(argc < 2){
-        load_history();
+        load_history(&history);
         ErrorCode e = interactive_mode().errored;
-        dump_history();
+        dump_history(&history);
         if (e){
             report_error(e);
             return e;
@@ -702,4 +698,4 @@ int main(int argc, const char** argv) {
     return 0;
     }
 
-#include "get_input.h"
+#include "get_input.c"
