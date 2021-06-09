@@ -692,7 +692,7 @@ load_history(struct LineHistory* history){
         return 1;
         }
     char buff[1024];
-    for(size_t i = 0; i < history->count; i++){
+    for(int i = 0; i < history->count; i++){
         free(history->history[i].text);
         }
     history->count = 0;
