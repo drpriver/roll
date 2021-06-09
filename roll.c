@@ -2,6 +2,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#ifndef _WIN32
+#include <unistd.h>
+static inline int stdin_is_interactive(void){
+    return isatty(STDIN_FILENO);
+}
+#else
+#include <conio.h>
+static inline int stdin_is_interactive(void){
+    return _isatty(0);
+}
+#endif
 #include "david_macros.h"
 #include "error_handling.h"
 #include "rng.h"
@@ -664,12 +675,32 @@ interactive_mode(void) {
 
 int main(int argc, const char** argv) {
     if(argc < 2){
-        load_history(&history);
-        ErrorCode e = interactive_mode().errored;
-        dump_history(&history);
-        if (e){
-            report_error(e);
-            return e;
+        if(stdin_is_interactive()){
+            load_history(&history);
+            ErrorCode e = interactive_mode().errored;
+            dump_history(&history);
+            if (e){
+                report_error(e);
+                return e;
+                }
+            }
+        else {
+            char buff[4192];
+            RngState rng = {};
+            seed_rng_auto(&rng);
+            Die dice[MAX_DICE];
+            while(fgets(buff, sizeof(buff), stdin)){
+                DiceExpression de = {.data=dice, .count = 0, .capacity = MAX_DICE};
+                size_t length = strlen(buff);
+                buff[--length] = '\0';
+                LongString input = {.text = buff, .length = length};
+                ErrorCode e = parse_dice_expression(input, &de).errored;
+                if(e){
+                    report_error(e);
+                    return e;
+                    }
+                roll_and_display(de, &rng);
+                }
             }
         return 0;
         }
