@@ -27,6 +27,11 @@ if cc.get_id() == 'gcc'
     language: 'c')
 
 endif
+if host_machine.system() == 'windows'
+  add_project_arguments(
+    '-D_CRT_SECURE_NO_DEPRECATE=1',
+    language: 'c')
+endif
 
 executable('roll',
            'roll.c',

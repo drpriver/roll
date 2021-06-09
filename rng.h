@@ -75,7 +75,7 @@ seed_rng_auto(Nonnull(RngState*) rng){
     read = getrandom(&initstate, sizeof(initstate), 0);
     read = getrandom(&initseq, sizeof(initseq), 0);
     (void)read;
-#elif defined(__GNUC__)
+#elif defined(__GNUC__) || defined(__clang__)
     // Idk how to get random numbers on windows.
     // Just use the intel instruction.
     //
@@ -114,8 +114,10 @@ bounded_random(Nonnull(RngState*) rng, uint32_t bound){
         }
     }
     assert(0);
-#if defined(__GNUC__)
+#if defined(__GNUC__) || defined(__clang__)
     __builtin_unreachable();
+#else
+    return 0;
 #endif
 }
 

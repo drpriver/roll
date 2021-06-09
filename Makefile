@@ -5,7 +5,7 @@ release-build: | release
 	ninja -C release
 
 debug:
-	env CFLAGS="-fsanitize=address,undefined" meson setup debug --buildtype debug
+	meson setup debug --buildtype debug
 release:
 	meson setup release --buildtype release
 install: | release

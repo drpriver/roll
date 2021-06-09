@@ -6,13 +6,13 @@
 #include <stdio.h>
 #include <ctype.h>
 #ifdef _WIN32
-
 #define VC_EXTRALEAN
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 #include <conio.h>
 #include <io.h>
 typedef long long ssize_t;
+#include <shlobj_core.h>
 #define STDIN_FILENO 0
 #define STDOUT_FILENO 1
 #define STDERR_FILENO 2
@@ -32,57 +32,6 @@ typedef long long ssize_t;
 #ifdef __clang__
 #pragma clang assume_nonnull begin
 #endif
-
-// Whether we done any global initialization code.  
-// Currently this is just whether or not we have put the terminal
-// in VT Processing mode on Windows.
-static int get_line_is_init;
-static void get_line_init(void);
-static int get_cols(void);
-static ssize_t get_line_internal(struct LineHistory* ,char* buff, size_t buffsize, LongString prompt);
-static ssize_t get_line_internal_loop(struct LineHistory*, char* buff, size_t buffsize, LongString prompt);
-
-struct TermState;
-static void enable_raw(struct TermState*);
-static void disable_raw(struct TermState*);
-
-struct LineState;
-static void change_history(struct LineHistory*, struct LineState*, int magnitude);
-static void redisplay(struct LineState*);
-static void delete_right(struct LineState*);
-static void insert_char_into_line(struct LineState*, char);
-
-static inline
-ssize_t
-read_one(char* buff){
-#ifdef _WIN32
-    *buff = _getch();
-    return 1;
-#else
-    return read(STDIN_FILENO, buff, 1);
-#endif
-    }
-
-static inline
-ssize_t
-write_data(char*buff, size_t len){
-#ifdef _WIN32
-    for(size_t i = 0; i < len; i++){
-        _putch(buff[i]);
-        }
-#else
-    return write(STDOUT_FILENO, buff, len);
-#endif
-    }
-
-static inline
-Nullable(void*)
-memdup(const void* src, size_t size){
-    if(!size) return NULL;
-    void* p = malloc(size);
-    if(p) memcpy(p, src, size);
-    return p;
-}
 
 #if 0
 FILE* loop_fp;
@@ -105,6 +54,130 @@ void dbg(const char*fmt, ...){
 #define DBG(...) (void)0
 #endif
 
+// Whether we have done any global initialization code.
+// Currently this is just whether or not we have put the terminal
+// in VT Processing mode on Windows.
+static int get_line_is_init;
+static void get_line_init(void);
+static int get_cols(void);
+static ssize_t get_line_internal(struct LineHistory* ,char* buff, size_t buffsize, LongString prompt);
+static ssize_t get_line_internal_loop(struct LineHistory*, char* buff, size_t buffsize, LongString prompt);
+
+struct TermState;
+static void enable_raw(struct TermState*);
+static void disable_raw(struct TermState*);
+
+struct LineState {
+    char* buff;
+    size_t buffsize;
+    LongString prompt;
+    size_t curr_pos;
+    size_t length;
+    size_t cols;
+    int history_index;
+};
+static void change_history(struct LineHistory*, struct LineState*, int magnitude);
+static void redisplay(struct LineState*);
+static void delete_right(struct LineState*);
+static void insert_char_into_line(struct LineState*, char);
+
+static inline
+ssize_t
+read_one(char* buff){
+#ifdef _WIN32
+    static const char* remaining;
+    if(remaining){
+        DBG("*remaining: '%c'\n", *remaining);
+        *buff = *remaining++;
+        if(!*remaining)
+            remaining = NULL;
+        return 1;
+        }
+    for(;;){
+        int c = _getch();
+        DBG("c = %d\n", c);
+        switch(c){
+            case 224:{
+                int next = _getch();
+                DBG("next = %d\n", next);
+                switch(next){
+                    // left cursor
+                    case 'K':
+                        *buff = '\033';
+                        remaining = "[D";
+                        return 1;
+                    // up
+                    case 'H':
+                        *buff = '\033';
+                        remaining = "[A";
+                        return 1;
+                    // down
+                    case 'P':
+                        *buff = '\033';
+                        remaining = "[B";
+                        return 1;
+                    // right
+                    case 'M':
+                        *buff = '\033';
+                        remaining = "[C";
+                        return 1;
+                    // home
+                    case 'G':
+                        *buff = '\x01';
+                        return 1;
+                    // end
+                    case 'O':
+                        *buff = '\x05';
+                        return 1;
+                    case 'S': // del
+                        *buff = '\x7f';
+                        return 1;
+
+                    // insert
+                    // case 'R':
+
+                    // pgdown
+                    // case 'Q':
+
+                    // pgup
+                    // case 'I':
+
+                    default:
+                        continue;
+                    }
+                }
+            default:
+                *buff = c;
+                return 1;
+            }
+    }
+    return 1;
+#else
+    return read(STDIN_FILENO, buff, 1);
+#endif
+    }
+
+static inline
+ssize_t
+write_data(char*buff, size_t len){
+#ifdef _WIN32
+    fwrite(buff, len, 1, stdout);
+    fflush(stdout);
+    return len;
+#else
+    return write(STDOUT_FILENO, buff, len);
+#endif
+    }
+
+static inline
+Nullable(void*)
+memdup(const void* src, size_t size){
+    if(!size) return NULL;
+    void* p = malloc(size);
+    if(p) memcpy(p, src, size);
+    return p;
+}
+
 static
 ssize_t
 get_input_line(struct LineHistory* history, LongString prompt, char* buff, size_t buff_len){
@@ -119,6 +192,9 @@ struct TermState {
 };
 static void enable_raw(struct TermState*ts){
     (void)ts;
+    // On windows you can get an unbuffered, non-echoing,
+    // etc. read_one by just calling _getch().
+    // So, no need to do anything special here.
     }
 static void disable_raw(struct TermState*ts){
     (void)ts;
@@ -127,15 +203,6 @@ static void disable_raw(struct TermState*ts){
 struct TermState {
     struct termios raw;
     struct termios orig;
-};
-struct LineState {
-    char* buff;
-    size_t buffsize;
-    LongString prompt;
-    size_t curr_pos;
-    size_t length;
-    size_t cols;
-    int history_index;
 };
 static
 void
@@ -315,6 +382,8 @@ get_line_internal_loop(struct LineHistory* history, char* buff, size_t buffsize,
                 DBG("ESC\n");
                 if(read_one(sequence) == -1) return -1;
                 if(read_one(sequence+1) == -1) return -1;
+                DBG("sequence[0] = %d\n", sequence[0]);
+                DBG("sequence[1] = %d\n", sequence[1]);
 
                 // ESC [ sequences
                 if(sequence[0] == '['){
@@ -545,7 +614,7 @@ insert_char_into_line(struct LineState* ls, char c){
     ls->buff[++ls->length] = '\0';
     }
 
-static 
+static
 void
 add_line_to_history(struct LineHistory* history, LongString ls){
     if(!ls.length)
@@ -605,7 +674,7 @@ static void get_line_init(void){
     DWORD mode;
     BOOL success = GetConsoleMode(hnd, &mode);
     if(!success)
-        return
+        return;
     mode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING | DISABLE_NEWLINE_AUTO_RETURN;
     success = SetConsoleMode(hnd, mode);
     if(!success)
@@ -613,12 +682,18 @@ static void get_line_init(void){
     hnd = GetStdHandle(STD_INPUT_HANDLE);
     success = GetConsoleMode(hnd, &mode);
     if(!success)
-        return
+        return;
     mode |= ENABLE_VIRTUAL_TERMINAL_INPUT;
     success = SetConsoleMode(hnd, mode);
     if(!success)
         return;
 #endif
+    // Someone might have hidden the cursor, which is annoying.
+#define SHOW_CURSOR "\033[?25h"
+    DBG("SHOW_CURSOR\n");
+    fputs(SHOW_CURSOR, stdout);
+    fflush(stdout);
+#undef SHOW_CURSOR
     }
 
 static int
@@ -642,21 +717,20 @@ get_cols(void){
 failed:
     return 80;
     }
-
-static 
+static
 void
 get_history_filename(char (*buff)[1024]){
 #ifdef _WIN32
     BOOL success = SHGetSpecialFolderPathA(
-            (HWND){},
-            &(*buff)[0],
+            (HWND){0},
+            *buff,
             CSIDL_MYDOCUMENTS,
             1
             );
     if(!success){
         return;
         }
-    strcpy(*buff, "/.dicehistory");
+    strcat(*buff, "\\.dicehistory");
 #else
     const char* home = getenv("HOME");
     if(home)
@@ -665,8 +739,8 @@ get_history_filename(char (*buff)[1024]){
 
     }
 
-static 
-int 
+static
+int
 dump_history(struct LineHistory* history){
     char filename[1024] = ".dicehistory";
     get_history_filename(&filename);
@@ -682,7 +756,7 @@ dump_history(struct LineHistory* history){
     return 0;
     }
 
-static 
+static
 int
 load_history(struct LineHistory* history){
     char filename[1024] = ".dicehistory";

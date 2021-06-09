@@ -8,7 +8,7 @@ static inline int stdin_is_interactive(void){
     return isatty(STDIN_FILENO);
 }
 #else
-#include <conio.h>
+#include <io.h>
 static inline int stdin_is_interactive(void){
     return _isatty(0);
 }
