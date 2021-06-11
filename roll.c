@@ -25,7 +25,7 @@ static struct LineHistory history;
 typedef struct Die {
     int base;
     int count;
-    } Die;
+} Die;
 Errorable_declare(Die);
 typedef struct DiceExpression {
     int capacity;
@@ -467,7 +467,7 @@ check_overflow(Nonnull(DiceExpression*)de){
     }
 
 
-enum {MAX_DICE = 16};
+enum {MAX_DICE = 64};
 static
 Errorable_f(void)
 parse_dice_expression(LongString input, Nonnull(DiceExpression*) de) {
@@ -679,7 +679,7 @@ int main(int argc, const char** argv) {
             load_history(&history);
             ErrorCode e = interactive_mode().errored;
             dump_history(&history);
-            if (e){
+            if(e){
                 report_error(e);
                 return e;
                 }
@@ -711,8 +711,7 @@ int main(int argc, const char** argv) {
         }
     StringBuilder sb = {};
     for(int i = 1; i < argc; i++){
-        if(i != 1)
-            sb_write_str(&sb, " ", 1);
+        sb_write_str(&sb, " ", 1);
         sb_write_str(&sb, argv[i], strlen(argv[i]));
         }
     LongString input = sb_borrow(&sb);

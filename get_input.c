@@ -187,18 +187,18 @@ get_input_line(struct LineHistory* history, LongString prompt, char* buff, size_
 }
 
 #ifdef _WIN32
+// On windows you can get an unbuffered, non-echoing,
+// etc. read_one by just calling _getch().
+// So, no need to do anything special here.
 struct TermState {
-    char c;
+    char c; // Avoid UB.
 };
 static void enable_raw(struct TermState*ts){
     (void)ts;
-    // On windows you can get an unbuffered, non-echoing,
-    // etc. read_one by just calling _getch().
-    // So, no need to do anything special here.
-    }
+}
 static void disable_raw(struct TermState*ts){
     (void)ts;
-    }
+}
 #else
 struct TermState {
     struct termios raw;
@@ -207,22 +207,21 @@ struct TermState {
 static
 void
 enable_raw(struct TermState*ts){
-#ifndef _WIN32
     if(tcgetattr(STDIN_FILENO, &ts->orig) == -1)
         return;
     ts->raw = ts->orig;
-    ts->raw.c_iflag &= ~(0
+    ts->raw.c_iflag &= ~(0lu
             | BRKINT // no break
             | ICRNL  // don't map CR to NL
             | INPCK  // skip parity check
             | ISTRIP // don't strip 8th bit off char
             | IXON   // don't allow start/stop input control
             );
-    ts->raw.c_oflag &= ~(0
+    ts->raw.c_oflag &= ~(0lu
         | OPOST // disable post processing
         );
     ts->raw.c_cflag |= CS8; // 8 bit chars
-    ts->raw.c_lflag &= ~(0
+    ts->raw.c_lflag &= ~(0lu
             | ECHO    // disable echo
             | ICANON  // disable canonical processing
             | IEXTEN  // no extended functions
@@ -237,18 +236,11 @@ enable_raw(struct TermState*ts){
     // Unread input will be discarded.
     if(tcsetattr(STDIN_FILENO, TCSAFLUSH, &ts->raw) < 0)
         return;
-#else
-    (void)ts;
-#endif
     }
 static
 void
 disable_raw(struct TermState*ts){
-#ifndef _WIN32
     tcsetattr(STDIN_FILENO, TCSAFLUSH, &ts->orig);
-#else
-    (void)ts;
-#endif
 }
 #endif
 
