@@ -37,6 +37,7 @@ static int dump_history(struct LineHistory*);
 static int load_history(struct LineHistory*);
 static void add_line_to_history(struct LineHistory*, LongString line);
 static ssize_t get_input_line(struct LineHistory*, LongString prompt, char* buff, size_t buff_len);
+static int get_cols(void);
 
 #ifdef __clang__
 #pragma clang assume_nonnull end

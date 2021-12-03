@@ -17,7 +17,10 @@
 
 #include <assert.h>
 
-#include "david_macros.h"
+#ifdef __clang__
+#pragma clang assume_nonnull begin
+#endif
+
 
 typedef struct RngState {
     uint64_t state;
@@ -29,7 +32,7 @@ typedef struct RngState {
 //
 static inline
 uint32_t
-rng_random32(Nonnull(RngState*) rng){
+rng_random32(RngState* rng){
     uint64_t oldstate = rng->state;
     rng->state = oldstate * 6364136223846793005ULL + rng->inc;
     uint32_t xorshifted = (uint32_t) ( ((oldstate >> 18u) ^ oldstate) >> 27u);
@@ -43,7 +46,7 @@ rng_random32(Nonnull(RngState*) rng){
 //
 static inline
 void
-seed_rng_fixed(Nonnull(RngState*) rng, uint64_t initstate, uint64_t initseq){
+seed_rng_fixed(RngState* rng, uint64_t initstate, uint64_t initseq){
     rng->state = 0U;
     rng->inc = (initseq << 1u) | 1u;
     rng_random32(rng);
@@ -58,7 +61,7 @@ seed_rng_fixed(Nonnull(RngState*) rng, uint64_t initstate, uint64_t initseq){
 //
 static inline
 void
-seed_rng_auto(Nonnull(RngState*) rng){
+seed_rng_auto(RngState* rng){
     _Static_assert(sizeof(unsigned long long) == sizeof(uint64_t), "");
     // spurious warnings on some platforms about unsigned long longs and unsigned longs,
     // so, use the unsigned long long.
@@ -102,7 +105,7 @@ fast_reduce(uint32_t x, uint32_t N){
 //
 static inline
 uint32_t
-bounded_random(Nonnull(RngState*) rng, uint32_t bound){
+bounded_random(RngState* rng, uint32_t bound){
     uint32_t threshold = -bound % bound;
     // bounded loop to catch unitialized rng errors
     for(size_t i = 0 ; i < 10000; i++){
@@ -120,5 +123,9 @@ bounded_random(Nonnull(RngState*) rng, uint32_t bound){
     return 0;
 #endif
 }
+
+#ifdef __clang__
+#pragma clang assume_nonnull end
+#endif
 
 #endif

@@ -1,6 +1,6 @@
 #ifndef ERROR_HANDLING_H
 #define ERROR_HANDLING_H
-#include "david_macros.h"
+#include "common_macros.h"
 #define ERROR_CODES(apply) \
     apply(NO_ERROR, 0) \
     /*Messages*/ \

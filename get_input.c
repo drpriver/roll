@@ -27,7 +27,7 @@ typedef long long ssize_t;
 #endif
 
 #include "get_input.h"
-#include "david_macros.h"
+#include "common_macros.h"
 
 #ifdef __clang__
 #pragma clang assume_nonnull begin
@@ -159,7 +159,7 @@ read_one(char* buff){
 
 static inline
 ssize_t
-write_data(char*buff, size_t len){
+write_data(const char*buff, size_t len){
 #ifdef _WIN32
     fwrite(buff, len, 1, stdout);
     fflush(stdout);
@@ -618,7 +618,7 @@ add_line_to_history(struct LineHistory* history, LongString ls){
     }
     char* copy = memdup(ls.text, ls.length+1);
     if(history->count == LINE_HISTORY_MAX){
-        free(history->history[0].text);
+        free((char*)history->history[0].text);
         memmove(history->history, history->history+1, (LINE_HISTORY_MAX-1)*sizeof(history->history[0]));
         history->history[LINE_HISTORY_MAX-1] = (LongString){
             .length = ls.length,
@@ -759,7 +759,7 @@ load_history(struct LineHistory* history){
         }
     char buff[1024];
     for(int i = 0; i < history->count; i++){
-        free(history->history[i].text);
+        free((char*)history->history[i].text);
         }
     history->count = 0;
     while(fgets(buff, sizeof(buff), fp)){

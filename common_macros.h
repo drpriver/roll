@@ -41,6 +41,7 @@
 #define unreachable() assert(0)
 #endif
 
+#define arrlen(arr) (sizeof(arr) / sizeof((arr)[0]))
 
 /*
  * Warning Suppression
@@ -55,6 +56,7 @@
 #define SuppressMissingBraces()  _Pragma("clang diagnostic ignored \"-Wmissing-braces\"")
 #define SuppressDoublePromotion() _Pragma("clang diagnostic ignored \"-Wdouble-promotion\"")
 #define SuppressCastFunction()
+#define SuppressCoveredSwitchDefault()  _Pragma("clang diagnostic ignored \"-Wcovered-switch-default\"")
 #define PushDiagnostic() _Pragma("clang diagnostic push")
 #define PopDiagnostic() _Pragma("clang diagnostic pop")
 #elif defined(__GNUC__)
@@ -65,6 +67,7 @@
 #define SuppressDoublePromotion() _Pragma("GCC diagnostic ignored \"-Wdouble-promotion\"")
 #define SuppressMissingBraces()  _Pragma("GCC diagnostic ignored \"-Wmissing-braces\"")
 #define SuppressCastFunction() _Pragma("GCC diagnostic ignored \"-Wcast-function-type\"")
+#define SuppressCoveredSwitchDefault()
 #define PushDiagnostic() _Pragma("GCC diagnostic push")
 #define PopDiagnostic() _Pragma("GCC diagnostic pop")
 #else
@@ -75,6 +78,7 @@
 #define SuppressMissingBraces()
 #define SuppressDiscardQualifiers()
 #define SuppressDoublePromotion()
+#define SuppressCoveredSwitchDefault()
 #define PushDiagnostic()
 #define PopDiagnostic()
 #endif
