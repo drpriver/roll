@@ -178,16 +178,16 @@ parse_uint64(const char* str, size_t length){
     if(!length){
         result.errored = PARSENUMBER_UNEXPECTED_END;
         return result;
-        }
+    }
     if(*str == '+'){
         str++;
         length--;
-        }
+    }
     // UINT64_MAX is 18,446,744,073,709,551,615 (20 characters)
     if(length > 20){
         result.errored = PARSENUMBER_OVERFLOWED_VALUE;
         return result;
-        }
+    }
     int bad = false;
     uint64_t value = 0;
     for(size_t i=0;i < length-1; i++){
@@ -197,11 +197,11 @@ parse_uint64(const char* str, size_t length){
             bad = true;
         value *= 10;
         value += cval;
-        }
+    }
     if(bad){
         result.errored = PARSENUMBER_INVALID_CHARACTER;
         return result;
-        }
+    }
     // Handle the last char differently as it's the only
     // one that can overflow.
     {
@@ -210,20 +210,20 @@ parse_uint64(const char* str, size_t length){
         if(cval > 9u){
             result.errored = PARSENUMBER_INVALID_CHARACTER;
             return result;
-            }
+        }
         if(__builtin_mul_overflow(value, 10, &value)){
             result.errored = PARSENUMBER_OVERFLOWED_VALUE;
             return result;
-            }
+        }
         if(__builtin_add_overflow(value, cval, &value)){
             result.errored = PARSENUMBER_OVERFLOWED_VALUE;
             return result;
-            }
+        }
 
     }
     result.result = value;
     return result;
-    }
+}
 
 static inline
 warn_unused
@@ -233,21 +233,21 @@ parse_int64(const char* str, size_t length){
     if(!length){
         result.errored = PARSENUMBER_UNEXPECTED_END;
         return result;
-        }
+    }
     bool negative = (*str == '-');
     if(negative){
         str++;
         length--;
-        }
+    }
     else if(*str == '+'){
         str++;
         length--;
-        }
+    }
     // INT64_MAX is 9223372036854775807 (19 characters)
     if(length > 19){
         result.errored = PARSENUMBER_OVERFLOWED_VALUE;
         return result;
-        }
+    }
     int bad = false;
     uint64_t value = 0;
     for(size_t i=0;i < length-1; i++){
@@ -257,11 +257,11 @@ parse_int64(const char* str, size_t length){
             bad = true;
         value *= 10;
         value += cval;
-        }
+    }
     if(bad){
         result.errored = PARSENUMBER_INVALID_CHARACTER;
         return result;
-        }
+    }
     // Handle the last char differently as it's the only
     // one that can overflow.
     {
@@ -270,32 +270,32 @@ parse_int64(const char* str, size_t length){
         if(cval > 9u){
             result.errored = PARSENUMBER_INVALID_CHARACTER;
             return result;
-            }
+        }
         if(__builtin_mul_overflow(value, 10, &value)){
             result.errored = PARSENUMBER_OVERFLOWED_VALUE;
             return result;
-            }
+        }
         if(__builtin_add_overflow(value, cval, &value)){
             result.errored = PARSENUMBER_OVERFLOWED_VALUE;
             return result;
-            }
+        }
     }
     if(negative){
         if(value > (uint64_t)INT64_MAX+1){
             result.errored = PARSENUMBER_OVERFLOWED_VALUE;
             return result;
-            }
-        value *= -1;
         }
+        value *= -1;
+    }
     else{
         if(value > (uint64_t)INT64_MAX){
             result.errored = PARSENUMBER_OVERFLOWED_VALUE;
             return result;
-            }
         }
+    }
     result.result = value;
     return result;
-    }
+}
 
 static inline
 warn_unused
@@ -305,16 +305,16 @@ parse_uint32(const char*str, size_t length){
     if(!length){
         result.errored = PARSENUMBER_UNEXPECTED_END;
         return result;
-        }
+    }
     if(*str == '+'){
         str++;
         length--;
-        }
+    }
     // UINT32_MAX is 10 characters
     if(length > 10){
         result.errored = PARSENUMBER_OVERFLOWED_VALUE;
         return result;
-        }
+    }
     int bad = false;
     uint32_t value = 0;
     for(size_t i=0;i < length-1; i++){
@@ -324,11 +324,11 @@ parse_uint32(const char*str, size_t length){
             bad = true;
         value *= 10;
         value += cval;
-        }
+    }
     if(bad){
         result.errored = PARSENUMBER_INVALID_CHARACTER;
         return result;
-        }
+    }
     // Handle the last char differently as it's the only
     // one that can overflow.
     {
@@ -337,19 +337,19 @@ parse_uint32(const char*str, size_t length){
         if(cval > 9u){
             result.errored = PARSENUMBER_INVALID_CHARACTER;
             return result;
-            }
+        }
         if(__builtin_mul_overflow(value, 10, &value)){
             result.errored = PARSENUMBER_OVERFLOWED_VALUE;
             return result;
-            }
+        }
         if(__builtin_add_overflow(value, cval, &value)){
             result.errored = PARSENUMBER_OVERFLOWED_VALUE;
             return result;
-            }
+        }
     }
     result.result = value;
     return result;
-    }
+}
 
 static inline
 warn_unused
@@ -359,21 +359,21 @@ parse_int32(const char*str, size_t length){
     if(!length){
         result.errored = PARSENUMBER_UNEXPECTED_END;
         return result;
-        }
+    }
     bool negative = (*str == '-');
     if(negative){
         str++;
         length--;
-        }
+    }
     else if (*str == '+'){
         str++;
         length--;
-        }
+    }
     // INT32_max is 10 chars
     if(length > 10){
         result.errored = PARSENUMBER_OVERFLOWED_VALUE;
         return result;
-        }
+    }
     int bad = false;
     uint32_t value = 0;
     for(size_t i=0;i < length-1; i++){
@@ -383,11 +383,11 @@ parse_int32(const char*str, size_t length){
             bad = true;
         value *= 10;
         value += cval;
-        }
+    }
     if(bad){
         result.errored = PARSENUMBER_INVALID_CHARACTER;
         return result;
-        }
+    }
     // Handle the last char differently as it's the only
     // one that can overflow.
     {
@@ -396,29 +396,29 @@ parse_int32(const char*str, size_t length){
         if(cval > 9u){
             result.errored = PARSENUMBER_INVALID_CHARACTER;
             return result;
-            }
+        }
         if(__builtin_mul_overflow(value, 10, &value)){
             result.errored = PARSENUMBER_OVERFLOWED_VALUE;
             return result;
-            }
+        }
         if(__builtin_add_overflow(value, cval, &value)){
             result.errored = PARSENUMBER_OVERFLOWED_VALUE;
             return result;
-            }
+        }
     }
     if(negative){
         if(value > (uint32_t)INT32_MAX+1){
             result.errored = PARSENUMBER_OVERFLOWED_VALUE;
             return result;
-            }
-        value *= -1;
         }
+        value *= -1;
+    }
     else{
         if(value > (uint32_t)INT32_MAX){
             result.errored = PARSENUMBER_OVERFLOWED_VALUE;
             return result;
-            }
         }
+    }
     result.result = value;
     return result;
 }
@@ -432,7 +432,7 @@ parse_int(const char* str, size_t length){
     result.errored = e.errored;
     result.result = e.result;
     return result;
-    }
+}
 
 static inline
 warn_unused
@@ -442,7 +442,7 @@ parse_hex_inner(const char* str, size_t length){
     if(length > sizeof(result.result)*2){
         result.errored = PARSENUMBER_OVERFLOWED_VALUE;
         return result;
-        }
+    }
     uint64_t value = 0;
     for(size_t i = 0; i < length; i++){
         char c = str[i];
@@ -460,13 +460,13 @@ parse_hex_inner(const char* str, size_t length){
             default:
                 result.errored = PARSENUMBER_INVALID_CHARACTER;
                 return result;
-            }
+        }
         value <<= 4;
         value |= char_value;
-        }
+    }
     result.result = value;
     return result;
-    }
+}
 
 static inline
 warn_unused
@@ -476,13 +476,13 @@ parse_pound_hex(const char* str, size_t length){
     if(length < 2){
         result.errored = PARSENUMBER_UNEXPECTED_END;
         return result;
-        }
+    }
     if(str[0] != '#'){
         result.errored = PARSENUMBER_INVALID_CHARACTER;
         return result;
-        }
-    return parse_hex_inner(str+1, length-1);
     }
+    return parse_hex_inner(str+1, length-1);
+}
 
 static inline
 warn_unused
@@ -492,17 +492,17 @@ parse_hex(const char* str, size_t length){
     if(length<3){
         result.errored = PARSENUMBER_UNEXPECTED_END;
         return result;
-        }
+    }
     if(str[0] != '0'){
         result.errored = PARSENUMBER_INVALID_CHARACTER;
         return result;
-        }
+    }
     if(str[1] != 'x' && str[1] != 'X'){
         result.errored = PARSENUMBER_INVALID_CHARACTER;
         return result;
-        }
-    return parse_hex_inner(str+2, length-2);
     }
+    return parse_hex_inner(str+2, length-2);
+}
 
 static inline warn_unused struct Uint64Result parse_binary_inner(const char*, size_t);
 
@@ -514,17 +514,17 @@ parse_binary(const char* str, size_t length){
     if(length<3){
         result.errored = PARSENUMBER_UNEXPECTED_END;
         return result;
-        }
+    }
     if(str[0] != '0'){
         result.errored = PARSENUMBER_INVALID_CHARACTER;
         return result;
-        }
+    }
     if(str[1] != 'b' && str[1] != 'B'){
         result.errored = PARSENUMBER_INVALID_CHARACTER;
         return result;
-        }
-    return parse_binary_inner(str+2, length-2);
     }
+    return parse_binary_inner(str+2, length-2);
+}
 
 static inline
 warn_unused
@@ -549,10 +549,10 @@ parse_binary_inner(const char* str, size_t length){
             default:
                 result.errored = PARSENUMBER_INVALID_CHARACTER;
                 return result;
-            }
         }
-    return result;
     }
+    return result;
+}
 
 static inline
 warn_unused
@@ -562,7 +562,7 @@ parse_unsigned_human(const char* str, size_t length){
     if(!length){
         result.errored = PARSENUMBER_UNEXPECTED_END;
         return result;
-        }
+    }
     if(str[0] == '#')
         return parse_pound_hex(str, length);
     if(str[0] == '0' && length > 1){
@@ -570,9 +570,9 @@ parse_unsigned_human(const char* str, size_t length){
             return parse_hex(str, length);
         if(str[1] == 'b' || str[1] == 'B')
             return parse_binary(str, length);
-        }
-    return parse_uint64(str, length);
     }
+    return parse_uint64(str, length);
+}
 
 #ifdef __clang__
 #pragma clang assume_nonnull end

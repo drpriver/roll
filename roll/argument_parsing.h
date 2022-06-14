@@ -255,8 +255,8 @@ ArgBitFlagDest(uint64_t* pointer, uint64_t flag){
         .type = ARG_BITFLAG,
         .pointer = pointer,
         .bitflag = flag,
-        };
-    }
+    };
+}
 
 // For enums.
 static inline
@@ -266,8 +266,8 @@ ArgEnumDest(void* pointer, const ArgParseEnumType* enu){
         .type = ARG_ENUM,
         .pointer = pointer,
         .enum_pointer = enu,
-        };
-    }
+    };
+}
 
 // For a user defined type.
 static inline
@@ -277,8 +277,8 @@ ArgUserDest(void* pointer, const ArgParseUserDefinedType* udt){
         .type = ARG_USER_DEFINED,
         .pointer = pointer,
         .user_pointer = udt,
-        };
-    }
+    };
+}
 
 //
 // A structure describing an argument to be parsed.
@@ -409,9 +409,9 @@ help_state_update(HelpState* hs, int n_to_print){
         const char* SPACES = "                                                                                ";
         printf("\n%.*s", hs->lead, SPACES);
         hs->remaining = hs->output_width;
-        }
-    hs->remaining -= n_to_print;
     }
+    hs->remaining -= n_to_print;
+}
 
 static inline
 void
@@ -432,13 +432,13 @@ print_argparse_help(const ArgParser* p, int columns){
             int to_print = 1 + arg->name.length + 4;
             help_state_update(&hs, to_print);
             printf(" %s ...", arg->name.text);
-            }
+        }
         else {
             int to_print = 1 + arg->name.length;
             help_state_update(&hs, to_print);
             printf(" %s", arg->name.text);
-            }
         }
+    }
     for(size_t i = 0; i < p->keyword.count; i++){
         ArgToParse* arg = &p->keyword.args[i];
         if(arg->hidden)
@@ -448,44 +448,44 @@ print_argparse_help(const ArgParser* p, int columns){
                 int to_print = sizeof(" [%s | %s]") - 5 + arg->name.length + arg->altname1.length;
                 help_state_update(&hs, to_print);
                 printf(" [%s | %s]", arg->name.text, arg->altname1.text);
-                }
+            }
             else{
                 int to_print = sizeof(" [%s]") - 3 + arg->name.length;
                 help_state_update(&hs, to_print);
                 printf(" [%s]", arg->name.text);
-                }
             }
+        }
         else {
             if(arg->altname1.text){
                 LongString tn = ArgTypeNames[arg->dest.type];
                 int to_print = sizeof(" [%s | %s <%s>%s]") - 9 + arg->name.length + arg->altname1.length + tn.length + (arg->max_num > 1?sizeof(" ...")-1: 0);
                 help_state_update(&hs, to_print);
                 printf(" [%s | %s <%s>%s]", arg->name.text, arg->altname1.text, tn.text, arg->max_num > 1?" ...":"");
-                }
+            }
             else{
                 LongString tn = ArgTypeNames[arg->dest.type];
                 int to_print = sizeof(" [%s <%s>%s]") - 7 + arg->name.length + tn.length + (arg->max_num > 1?sizeof(" ...")-1:0);
                 help_state_update(&hs, to_print);
                 printf(" [%s <%s>%s]", arg->name.text, tn.text, arg->max_num>1?" ...":"");
-                }
             }
         }
+    }
     puts("\n");
     if(p->early_out.count){
         puts("Early Out Arguments:\n"
              "--------------------");
-        }
+    }
     for(size_t i = 0; i < p->early_out.count; i++){
         ArgToParse* early = &p->early_out.args[i];
         if(early->altname1.length){
             printf("%s, %s:", early->name.text, early->altname1.text);
-            }
+        }
         else{
             printf("%s:", early->name.text);
-            }
+        }
         print_wrapped_help(early->help, columns);
         putchar('\n');
-        }
+    }
     if(p->positional.count){
         puts("Positional Arguments:\n"
              "---------------------");
@@ -493,8 +493,8 @@ print_argparse_help(const ArgParser* p, int columns){
             ArgToParse* arg = &p->positional.args[i];
             print_arg_help(arg, columns);
             putchar('\n');
-            }
         }
+    }
     if(p->keyword.count)
         fputs("Keyword Arguments:\n"
              "------------------", stdout);
@@ -504,8 +504,8 @@ print_argparse_help(const ArgParser* p, int columns){
             continue;
         putchar('\n');
         print_arg_help(arg, columns);
-        }
     }
+}
 
 static inline
 void
@@ -517,8 +517,8 @@ print_enum_options(const ArgParseEnumType*_Nullable enu_){
     printf("    --------\n");
     for(size_t i = 0; i < enu->enum_count; i++){
         printf("    %s\n", enu->enum_names[i].text);
-        }
     }
+}
 
 // See top of file.
 static inline
@@ -536,11 +536,11 @@ print_arg_help(const ArgToParse* arg, int columns){
         default:
             typename = ArgTypeNames[type];
             break;
-        }
+    }
     printf("%s", name);
     if(arg->altname1.length){
         printf(", %s", arg->altname1.text);
-        }
+    }
     printf(": %s", typename.text);
 
     if(arg->min_num != 0 || !arg->show_default){
@@ -548,55 +548,55 @@ print_arg_help(const ArgToParse* arg, int columns){
         if(type == ARG_ENUM)
             print_enum_options(arg->dest.enum_pointer);
         return;
-        }
+    }
     switch(type){
         case ARG_INTEGER64:{
             int64_t* data = arg->dest.pointer;
             printf(" = %lld", (long long)*data);
             print_wrapped_help(help, columns);
-            }break;
+        }break;
         case ARG_UINTEGER64:{
             int64_t* data = arg->dest.pointer;
             printf(" = %llu", (unsigned long long)*data);
             print_wrapped_help(help, columns);
-            }break;
+        }break;
         case ARG_INT:{
             int* data = arg->dest.pointer;
             printf(" = %d", *data);
             print_wrapped_help(help, columns);
-            }break;
+        }break;
         case ARG_FLOAT32:{
             float* data = arg->dest.pointer;
             printf(" = %f", (double)*data);
             print_wrapped_help(help, columns);
-            }break;
+        }break;
         case ARG_FLOAT64:{
             double* data = arg->dest.pointer;
             printf(" = %f", *data);
             print_wrapped_help(help, columns);
-            }break;
+        }break;
         case ARG_BITFLAG:{
             print_wrapped_help(help, columns);
-            }break;
+        }break;
         case ARG_FLAG:{
             print_wrapped_help(help, columns);
-            }break;
+        }break;
         case ARG_CSTRING:{
             const char* s = arg->dest.pointer;
             printf(" = '%s'", s);
             print_wrapped_help(help, columns);
-            }break;
+        }break;
         case ARG_STRING:{
             LongString* s = arg->dest.pointer;
             printf(" = '%.*s'", (int)s->length, s->text);
             print_wrapped_help(help, columns);
-            }break;
+        }break;
         case ARG_USER_DEFINED:{
             if(arg->dest.user_pointer->default_printer){
                 arg->dest.user_pointer->default_printer(arg->dest.pointer);
                 }
             print_wrapped_help(help, columns);
-            }break;
+        }break;
         case ARG_ENUM:{
             const ArgParseEnumType* enu = arg->dest.enum_pointer;
             LongString enu_name = LS("???");
@@ -605,29 +605,29 @@ print_arg_help(const ArgToParse* arg, int columns){
                     uint8_t* def = arg->dest.pointer;
                     if(*def <  enu->enum_count)
                         enu_name = enu->enum_names[*def];
-                    }break;
+                }break;
                 case 2:{
                     uint16_t* def = arg->dest.pointer;
                     if(*def <  enu->enum_count)
                         enu_name = enu->enum_names[*def];
-                    }break;
+                }break;
                 case 4:{
                     uint32_t* def = arg->dest.pointer;
                     if(*def <  enu->enum_count)
                         enu_name = enu->enum_names[*def];
-                    }break;
+                }break;
                 case 8:{
                     uint64_t* def = arg->dest.pointer;
                     if(*def <  enu->enum_count)
                         enu_name = enu->enum_names[*def];
-                    }break;
-                }
+                }break;
+            }
             printf(" = %s", enu_name.text);
             print_wrapped_help(help, columns);
             print_enum_options(enu);
-            }break;
-        }
+        }break;
     }
+}
 
 struct HelpTokenized {
     StringView token;
@@ -646,15 +646,15 @@ next_tokenize_help(const char* help){
                 continue;
             default:
                 break;
-            }
-        break;
         }
+        break;
+    }
     if(*help == '\n'){
         return (struct HelpTokenized){
             .is_newline = true,
             .rest = help+1,
-            };
-        }
+        };
+    }
     const char* begin = help;
     for(;;help++){
         switch(*help){
@@ -664,14 +664,14 @@ next_tokenize_help(const char* help){
                     .token.text = begin,
                     .token.length = help - begin,
                     .rest = help,
-                    };
-                }break;
+                };
+            }break;
             default:
                 continue;
-            }
         }
-    __builtin_unreachable();
     }
+    __builtin_unreachable();
+}
 
 static inline
 void
@@ -685,18 +685,18 @@ print_wrapped(const char*text, int columns){
             if(hs.remaining != hs.output_width){
                 putchar('\n');
                 hs.remaining = hs.output_width;
-                }
-            continue;
             }
+            continue;
+        }
         help_state_update(&hs, tok.token.length);
         printf("%.*s", (int)tok.token.length, tok.token.text);
         if(hs.remaining){
             putchar(' ');
             hs.remaining--;
-            }
         }
-    putchar('\n');
     }
+    putchar('\n');
+}
 
 static inline
 void
@@ -704,7 +704,7 @@ print_wrapped_help(const char*_Nullable help, int columns){
     if(!help){
         putchar('\n');
         return;
-        }
+    }
     printf("\n    ");
     HelpState hs = {.output_width = columns - 4, .lead = 4, .remaining = 0};
     hs.remaining = hs.output_width;
@@ -715,18 +715,18 @@ print_wrapped_help(const char*_Nullable help, int columns){
             if(hs.remaining != hs.output_width){
                 printf("\n    ");
                 hs.remaining = hs.output_width;
-                }
-            continue;
             }
+            continue;
+        }
         help_state_update(&hs, tok.token.length);
         printf("%.*s", (int)tok.token.length, tok.token.text);
         if(hs.remaining){
             putchar(' ');
             hs.remaining--;
-            }
         }
-    putchar('\n');
     }
+    putchar('\n');
+}
 
 static inline int set_flag(ArgToParse* arg);
 // Parse a single argument from a string.
@@ -741,45 +741,45 @@ parse_arg(ArgToParse* arg, StringView s){
     // If previous num parsed is nonzero, this means
     // that what we are pointing to is an array.
 #define APPEND_ARG(type, value_) do { \
-    if(arg->append_proc){ \
-        int fail = arg->append_proc(arg->dest.pointer, &value_); \
-        if(fail) {\
-            return ARGPARSE_CONVERSION_ERROR; \
+            if(arg->append_proc){ \
+                int fail = arg->append_proc(arg->dest.pointer, &value_); \
+                if(fail) {\
+                    return ARGPARSE_CONVERSION_ERROR; \
+                } \
+                arg->num_parsed += 1; \
             } \
-        arg->num_parsed += 1; \
-        } \
-    else { \
-        type* dest = arg->dest.pointer; \
-        dest += arg->num_parsed; \
-        *dest = value_; \
-        arg->num_parsed += 1; \
-        } \
-    }while(0)
+            else { \
+                type* dest = arg->dest.pointer; \
+                dest += arg->num_parsed; \
+                *dest = value_; \
+                arg->num_parsed += 1; \
+            } \
+        }while(0)
     switch(arg->dest.type){
         case ARG_INTEGER64:{
             struct Int64Result e = parse_int64(s.text, s.length);
             if(e.errored){
                 return ARGPARSE_CONVERSION_ERROR;
-                }
+            }
             int64_t value = e.result;
             APPEND_ARG(int64_t, value);
-            }break;
+        }break;
         case ARG_UINTEGER64:{
             struct Uint64Result e = parse_unsigned_human(s.text, s.length);
             if(e.errored) {
                 return ARGPARSE_CONVERSION_ERROR;
-                }
+            }
             uint64_t value = e.result;
             APPEND_ARG(uint64_t, value);
-            }break;
+        }break;
         case ARG_INT:{
             struct IntResult e = parse_int(s.text, s.length);
             if(e.errored) {
                 return ARGPARSE_CONVERSION_ERROR;
-                }
+            }
             int value = e.result;
             APPEND_ARG(int, value);
-            }break;
+        }break;
         case ARG_FLOAT32:{
             char* endptr;
             float value = strtof(s.text, &endptr);
@@ -788,7 +788,7 @@ parse_arg(ArgToParse* arg, StringView s){
             if(*endptr != '\0')
                 return ARGPARSE_CONVERSION_ERROR;
             APPEND_ARG(float, value);
-            }break;
+        }break;
         case ARG_FLOAT64:{
             char* endptr;
             double value = strtod(s.text, &endptr);
@@ -797,7 +797,7 @@ parse_arg(ArgToParse* arg, StringView s){
             if(*endptr != '\0')
                 return ARGPARSE_CONVERSION_ERROR;
             APPEND_ARG(double, value);
-            }break;
+        }break;
         // for flags, using the append_proc doesn't make sense.
         case ARG_BITFLAG:
             // fall-through
@@ -808,10 +808,10 @@ parse_arg(ArgToParse* arg, StringView s){
             // This is a hack, our target is actually a LongString.
             // But it can also be a StringView and they pun to each other.
             APPEND_ARG(StringView, s);
-            }break;
+        }break;
         case ARG_CSTRING:{
             APPEND_ARG(const char*, s.text);
-            }break;
+        }break;
         case ARG_USER_DEFINED:{
             // This is error prone, but seemed like the best option.
             // We could alloca onto our stack, but that could be significantly
@@ -819,15 +819,15 @@ parse_arg(ArgToParse* arg, StringView s){
             if(arg->append_proc){
                 int e = arg->append_proc(arg->dest.pointer, &s);
                 if(e) return ARGPARSE_CONVERSION_ERROR;
-                }
+            }
             else {
                 char* dest = arg->dest.pointer;
                 dest += arg->dest.user_pointer->type_size * arg->num_parsed;
                 int e = arg->dest.user_pointer->converter(arg->dest.user_pointer->user_data, s.text, s.length, dest);
                 if(e) return ARGPARSE_CONVERSION_ERROR;
-                }
+            }
             arg->num_parsed += 1;
-            }break;
+        }break;
         case ARG_ENUM:{
             if(!s.length) return ARGPARSE_CONVERSION_ERROR;
             const ArgParseEnumType* enu = arg->dest.enum_pointer;
@@ -846,26 +846,26 @@ parse_arg(ArgToParse* arg, StringView s){
                     switch(enu->enum_size){
                         case 1:{
                             APPEND_ARG(uint8_t, i);
-                            }return 0;
+                        }return 0;
                         case 2:{
                             APPEND_ARG(uint16_t, i);
-                            }return 0;
+                        }return 0;
                         case 4:{
                             APPEND_ARG(uint32_t, i);
-                            }return 0;
+                        }return 0;
                         case 8:{
                             APPEND_ARG(uint64_t, i);
-                            }return 0;
+                        }return 0;
                         default:
                             return ARGPARSE_CONVERSION_ERROR;
-                        }
                     }
                 }
+            }
             return ARGPARSE_CONVERSION_ERROR;
-            }break;
-        }
-    return 0;
+        }break;
     }
+    return 0;
+}
 #undef APPEND_ARG
 
 // Set a flag. I really don't see why you would use this outside of this.
@@ -879,7 +879,7 @@ set_flag(ArgToParse* arg){
         *dest |= arg->dest.bitflag;
         arg->num_parsed += 1;
         return 0;
-        }
+    }
     assert(arg->dest.type == ARG_FLAG);
     if(arg->num_parsed >= arg->max_num)
         return ARGPARSE_DUPLICATE_KWARG;
@@ -887,7 +887,7 @@ set_flag(ArgToParse* arg){
     *dest = true;
     arg->num_parsed += 1;
     return 0;
-    }
+}
 
 static inline
 ssize_t
@@ -900,10 +900,10 @@ check_for_early_out_args(ArgParser* parser, const Args* args){
                 return j;
             if(early->altname1.length && SV_equals(argstring, early->altname1))
                 return j;
-            }
         }
-    return -1;
     }
+    return -1;
+}
 
 static inline
 ArgToParse*_Nullable
@@ -916,10 +916,10 @@ find_matching_kwarg(ArgParser* parser, StringView sv){
         if(kw->altname1.length){
             if(SV_equals(kw->altname1, sv))
                 return kw;
-            }
         }
-    return NULL;
     }
+    return NULL;
+}
 
 // See top of file.
 static inline
@@ -930,7 +930,7 @@ parse_args(ArgParser* parser, const Args* args, enum ArgParseFlags flags){
     if(parser->positional.count){
         pos_arg = &parser->positional.args[0];
         past_the_end = pos_arg + parser->positional.count;
-        }
+    }
     ArgToParse* kwarg = NULL;
     const char*const* argv_end = args->argv?(args->argv+args->argc):NULL;
     for(const char*const* arg = args->argv; arg != argv_end; ++arg){
@@ -950,12 +950,12 @@ parse_args(ArgParser* parser, const Args* args, enum ArgParseFlags flags){
                                 break;
                             parser->failed.arg = *arg;
                             return ARGPARSE_UNKNOWN_KWARG;
-                            }
+                        }
                         if(new_kwarg->visited){
                             parser->failed.arg_to_parse = new_kwarg;
                             parser->failed.arg = *arg;
                             return ARGPARSE_DUPLICATE_KWARG;
-                            }
+                        }
                         if(pos_arg && pos_arg != past_the_end && pos_arg->visited)
                             pos_arg++;
                         kwarg = new_kwarg;
@@ -966,24 +966,24 @@ parse_args(ArgParser* parser, const Args* args, enum ArgParseFlags flags){
                                 parser->failed.arg_to_parse = kwarg;
                                 parser->failed.arg = *arg;
                                 return error;
-                                }
-                            kwarg = NULL;
                             }
+                            kwarg = NULL;
+                        }
                         continue;
-                        }break;
-                    }
+                    }break;
                 }
             }
+        }
         if(kwarg){
             int err = parse_arg(kwarg, s);
             if(err){
                 parser->failed.arg = *arg;
                 parser->failed.arg_to_parse = kwarg;
                 return err;
-                }
+            }
             if(kwarg->num_parsed == kwarg->max_num)
                 kwarg = NULL;
-            }
+        }
         else if(pos_arg && pos_arg != past_the_end){
             pos_arg->visited = true;
             int err = parse_arg(pos_arg, s);
@@ -991,44 +991,44 @@ parse_args(ArgParser* parser, const Args* args, enum ArgParseFlags flags){
                 parser->failed.arg = *arg;
                 parser->failed.arg_to_parse = pos_arg;
                 return err;
-                }
+            }
             if(pos_arg->num_parsed == pos_arg->max_num)
                 pos_arg++;
-            }
+        }
         else {
             parser->failed.arg = *arg;
             return ARGPARSE_EXCESS_ARGS;
-            }
         }
+    }
     for(size_t i = 0; i < parser->positional.count; i++){
         ArgToParse* arg = &parser->positional.args[i];
         if(arg->num_parsed < arg->min_num){
             parser->failed.arg_to_parse = arg;
             return ARGPARSE_INSUFFICIENT_ARGS;
-            }
+        }
         if(arg->num_parsed > arg->max_num){
             parser->failed.arg_to_parse = arg;
             return ARGPARSE_EXCESS_ARGS;
-            }
         }
+    }
     for(size_t i = 0; i < parser->keyword.count; i++){
         ArgToParse* arg = &parser->keyword.args[i];
         if(arg->num_parsed < arg->min_num){
             parser->failed.arg_to_parse = arg;
             return ARGPARSE_INSUFFICIENT_ARGS;
-            }
+        }
         if(arg->num_parsed > arg->max_num){
             parser->failed.arg_to_parse = arg;
             return ARGPARSE_EXCESS_ARGS;
-            }
+        }
         // This only makes sense for keyword arguments.
         if(arg->visited && arg->num_parsed == 0){
             parser->failed.arg_to_parse = arg;
             return ARGPARSE_VISITED_NO_ARG_GIVEN;
-            }
         }
-    return 0;
     }
+    return 0;
+}
 
 static inline
 void
@@ -1036,7 +1036,7 @@ print_argparse_error(ArgParser* parser, enum ArgParseError error){
     if(parser->failed.arg_to_parse){
         ArgToParse* arg_to_parse = parser->failed.arg_to_parse;
         fprintf(stderr, "Error when parsing argument for '%s': ", arg_to_parse->name.text);
-        }
+    }
     switch(error){
         case ARGPARSE_NO_ERROR:
             break;
@@ -1081,7 +1081,7 @@ print_argparse_error(ArgParser* parser, enum ArgParseError error){
                         }
                         fprintf(stderr, "Unable to parse an unknown type from '%s'\n", arg);
                         return;
-                    }
+                }
                 else {
                     switch(arg_to_parse->dest.type){
                         case ARG_INTEGER64:
@@ -1116,19 +1116,19 @@ print_argparse_error(ArgParser* parser, enum ArgParseError error){
                         case ARG_FLAG:
                             fprintf(stderr, "Unable to parse a flag. This is a bug.\n");
                             return;
-                        }
+                    }
                     fprintf(stderr, "Unable to parse an unknown type from unknown argument'\n");
                     return;
-                    }
                 }
+            }
             else if(parser->failed.arg){
                 const char* arg = parser->failed.arg;
                 fprintf(stderr, "Unable to parse an unknown type from '%s'\n", arg);
                 return;
-                }
+            }
             else {
                 fprintf(stderr, "Unable to parse an unknown type from an unknown argument. This is a bug.\n");
-                }
+            }
             return;
         case ARGPARSE_UNKNOWN_KWARG:
             if(parser->failed.arg)
@@ -1144,39 +1144,39 @@ print_argparse_error(ArgParser* parser, enum ArgParseError error){
             if(!parser->failed.arg_to_parse){
                 fprintf(stderr, "More arguments given than needed. First excess argument: '%s'\n", parser->failed.arg);
                 return;
-                }
+            }
             ArgToParse* arg_to_parse = parser->failed.arg_to_parse;
 
             if(!parser->failed.arg){
                 fprintf(stderr, "Excess arguments. No more than %d arguments needed. Unknown first excess argument (this is a bug)\n", arg_to_parse->max_num);
                 return;
-                }
+            }
             fprintf(stderr, "Excess arguments. No more than %d arguments needed. First excess argument: '%s'\n", arg_to_parse->max_num, parser->failed.arg) ;
-            }return;
+        }return;
         case ARGPARSE_INSUFFICIENT_ARGS:{
             if(!parser->failed.arg_to_parse){
                 fprintf(stderr, "Insufficent arguments for unknown option. This is a bug\n");
                 return;
-                }
+            }
             ArgToParse* arg_to_parse = parser->failed.arg_to_parse;
             fprintf(stderr, "Insufficient arguments. %d arguments are required.\n", arg_to_parse->min_num);
-            }return;
+        }return;
         case ARGPARSE_VISITED_NO_ARG_GIVEN:{
             ArgToParse* arg_to_parse = parser->failed.arg_to_parse;
             if(!arg_to_parse){
                 fprintf(stderr, "An unknown argument was visited. This is a bug.\n");
                 return;
-                }
+            }
             fprintf(stderr, "No arguments given.\n");
-            }return;
+        }return;
         case ARGPARSE_INTERNAL_ERROR:{
             fprintf(stderr, "An internal error occurred. This is a bug.\n");
             return;
-            }
         }
-        fprintf(stderr, "Unknown error when parsing arguments\n");
-        return;
     }
+    fprintf(stderr, "Unknown error when parsing arguments\n");
+    return;
+}
 
 #ifdef ARGPARSE_EXAMPLE
 // This is an example of how to use this header.  To compile, make a .c file,
@@ -1198,46 +1198,46 @@ main(int argc, const char*_Null_unspecified*_Null_unspecified argv){
                 .dest = ARGDEST(&somepath),
                 .help = "Source file (.txt file) to read from.",
                 .hide_default = true,
-            },
-        };
+        },
+    };
     int n_times = 5;
     bool dry_run = false;
     ArgToParse kw_args[] = {
-            {
-                .name = SV("-o"),
-                .altname1 = SV("--output"),
-                .max_num = 1,
-                .dest = ARGDEST(&output),
-                .help = "Where to write the output file."
-            },
-            {
-                .name = SV("-n"),
-                .altname1 = SV("--n-times"),
-                .max_num = 1,
-                .dest = ARGDEST(&n_times),
-                .show_default = true,
-                .help = "Do it n times.",
-            },
-            {
-                .name = SV("--dry-run"),
-                .max_num = 1,
-                .dest = ARGDEST(&dry_run),
-                .help = "Do everything but actually write the file."
-            },
-        };
+        {
+            .name = SV("-o"),
+            .altname1 = SV("--output"),
+            .max_num = 1,
+            .dest = ARGDEST(&output),
+            .help = "Where to write the output file."
+        },
+        {
+            .name = SV("-n"),
+            .altname1 = SV("--n-times"),
+            .max_num = 1,
+            .dest = ARGDEST(&n_times),
+            .show_default = true,
+            .help = "Do it n times.",
+        },
+        {
+            .name = SV("--dry-run"),
+            .max_num = 1,
+            .dest = ARGDEST(&dry_run),
+            .help = "Do everything but actually write the file."
+        },
+    };
     enum {HELP=0, VERSION};
     ArgToParse early_args[] = {
-            [HELP] = {
-                .name = SV("-h"),
-                .altname1 = SV("--help"),
-                .help = "Print this help and exit.",
-            },
-            [VERSION] = {
-                .name = SV("-v"),
-                .altname1 = SV("--version"),
-                .help = "Print the version and exit.",
-            },
-        };
+        [HELP] = {
+            .name = SV("-h"),
+            .altname1 = SV("--help"),
+            .help = "Print this help and exit.",
+        },
+        [VERSION] = {
+            .name = SV("-v"),
+            .altname1 = SV("--version"),
+            .help = "Print the version and exit.",
+        },
+    };
     #define arrlen(arr) (sizeof(arr)/sizeof((arr)[0]))
     ArgParser parser = {
         .name = argc?argv[0]:"argparse_example",
@@ -1260,12 +1260,12 @@ main(int argc, const char*_Null_unspecified*_Null_unspecified argv){
             return 0;
         default:
             break;
-        }
+    }
     enum ArgParseError error = parse_args(&parser, &args, ARGPARSE_FLAGS_NONE);
     if(error){
         print_argparse_error(&parser, error);
         return error;
-        }
+    }
     // Parsing has succeeded at this point.
     // Real program would then do stuff with these values.
     printf("somepath = '%s'\n", somepath.text);

@@ -64,7 +64,7 @@ force_inline
 StringView
 LS_to_SV(LongString ls){
     return (StringView){.length=ls.length, .text=ls.text};
-    }
+}
 
 static inline
 force_inline
@@ -74,8 +74,8 @@ cstr_to_SV(const char* cstr){
     return (StringView){
         .length = len,
         .text = cstr,
-        };
-    }
+    };
+}
 
 static inline
 bool
@@ -87,7 +87,7 @@ LS_equals(const LongString a, const LongString b){
     // assert(a.text);
     // assert(b.text);
     return a.text && b.text && !strcmp(a.text, b.text);
-    }
+}
 
 #ifdef LS
 #error "LS defined"
@@ -107,7 +107,8 @@ SV_equals(const StringView a, const StringView b){
     // assert(a.text);
     // assert(b.text);
     return a.text && b.text && memcmp(a.text, b.text, a.length) == 0;
-    }
+}
+
 static inline
 bool
 SV_utf16_equals(const StringViewUtf16 a, const StringViewUtf16 b){
@@ -118,7 +119,7 @@ SV_utf16_equals(const StringViewUtf16 a, const StringViewUtf16 b){
     // assert(a.text);
     // assert(b.text);
     return a.text && b.text && memcmp(a.text, b.text, a.length*sizeof(uint16_t)) == 0;
-    }
+}
 
 static inline
 bool
@@ -130,7 +131,7 @@ LS_SV_equals(const LongString ls, const StringView sv){
     // assert(ls.text);
     // assert(sv.text);
     return ls.text && sv.text && memcmp(ls.text, sv.text, sv.length)==0;
-    }
+}
 
 // Maybe it's UB (idk) but this works for LongStrings as well.
 // Although maybe I should just use strcmp for those.
@@ -149,7 +150,7 @@ StringView_cmp(const void* a, const void* b){
         if(lhs->text == rhs->text)
             return 0;
         return memcmp(lhs->text, rhs->text, l1);
-        }
+    }
     if(!lhs->length)
         return -(int)(unsigned char)rhs->text[0];
     if(!rhs->length)
@@ -159,9 +160,9 @@ StringView_cmp(const void* a, const void* b){
         return prefix_cmp;
     if(lhs->length > rhs->length){
         return (int)(unsigned char)lhs->text[rhs->length];
-        }
-    return -(int)(unsigned char)rhs->text[lhs->length];
     }
+    return -(int)(unsigned char)rhs->text[lhs->length];
+}
 
 #ifdef __clang__
 #pragma clang assume_nonnull end
