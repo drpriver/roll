@@ -1,3 +1,6 @@
+//
+// Copyright © 2021-2022, David Priver
+//
 #ifndef STRING_BUILDER_H
 #define STRING_BUILDER_H
 #include <string.h>

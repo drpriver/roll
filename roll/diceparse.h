@@ -1,3 +1,6 @@
+//
+// Copyright © 2021-2022, David Priver
+//
 #ifndef DICEPARSE_H
 #define DICEPARSE_H
 #include <stdint.h>

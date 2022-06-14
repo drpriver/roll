@@ -1,3 +1,6 @@
+//
+// Copyright © 2021-2022, David Priver
+//
 #ifndef DAVID_MACROS_H
 #define DAVID_MACROS_H
 

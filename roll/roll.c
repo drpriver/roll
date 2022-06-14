@@ -1,3 +1,6 @@
+//
+// Copyright © 2021-2022, David Priver
+//
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -353,6 +356,10 @@ main(int argc, const char** argv) {
                 size_t length = strlen(buff);
                 buff[--length] = '\0';
                 StringView input = {.text = buff, .length = length};
+                if(input.length == 1 && input.text[0] == 'v'){
+                    verbose = !verbose;
+                    continue;
+                }
                 int index = diceparse_parse(&exprbuffer, input);
                 if(index < 0)
                     return 1;
