@@ -14,7 +14,6 @@ static inline int stdin_is_interactive(void){
 }
 #endif
 #include "common_macros.h"
-#include "error_handling.h"
 #include "rng.h"
 #include "long_string.h"
 #include "StringBuilder.h"
