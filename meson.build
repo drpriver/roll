@@ -1,5 +1,5 @@
 project('roll', 'c',
-  version : '0.1',
+  version : '1.0',
   default_options : ['warning_level=3'])
 
 cc = meson.get_compiler('c')
@@ -26,27 +26,6 @@ if host_machine.system() == 'windows'
     language: 'c')
 endif
 
-if host_machine.system() == 'darwin'
-  add_languages('objc')
-  add_project_arguments(
-      '-Wno-nullability-extension', # We guard this with an ifdef so it's fine.
-      '-Wno-gnu-auto-type',
-      '-Wno-gnu-empty-initializer',
-      '-Wno-gnu-statement-expression',
-      '-Wno-gnu-case-range',
-      '-Wno-keyword-macro',
-      '-DDICEPARSE_API=__attribute__((visibility("hidden")))',
-      language : 'objc')
-  executable(
-    'DiceRoll',
-    'diceroll.m',
-    'diceparse.c',
-    dependencies:[dependency('appleframeworks', modules:['Cocoa'])],
-    objc_args: ['-fobjc-arc'],
-    install: true,
-    )
-endif
-
 executable('roll',
-           'roll.c',
+           'roll/roll.c',
            install : true)

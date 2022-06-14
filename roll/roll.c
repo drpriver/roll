@@ -281,18 +281,19 @@ interactive_mode(bool verbose) {
     return;
 }
 
-int main(int argc, const char** argv) {
+int 
+main(int argc, const char** argv) {
 
     bool verbose = stdin_is_interactive();
     ArgToParse kw_args[] = {
-            {
-                .name = SV("-v"),
-                .altname1 = SV("--verbose"),
-                .help = "Display the individual dice rolls instead of just the total.",
-                .max_num = 1,
-                .dest = ARGDEST(&verbose),
-            },
-        };
+        {
+            .name = SV("-v"),
+            .altname1 = SV("--verbose"),
+            .help = "Display the individual dice rolls instead of just the total.",
+            .max_num = 1,
+            .dest = ARGDEST(&verbose),
+        },
+    };
     StringView dice_strings[64];
     ArgToParse pos_args[] = {
         {
@@ -301,7 +302,7 @@ int main(int argc, const char** argv) {
             .max_num = arrlen(dice_strings),
             .dest = ARGDEST(&dice_strings[0]),
         },
-        };
+    };
     enum {HELP};
     ArgToParse early_out_args[] = {
         [HELP] = {
@@ -309,7 +310,7 @@ int main(int argc, const char** argv) {
             .altname1 = SV("--help"),
             .help = "Print this help and exit.",
         }
-        };
+    };
     ArgParser parser = {
         .name             = argv[0],
         .early_out.args   = early_out_args,
@@ -319,7 +320,7 @@ int main(int argc, const char** argv) {
         .keyword.args     = kw_args,
         .keyword.count    = arrlen(kw_args),
         .description      = "A program for rolling dice.",
-        };
+    };
     Args args = {argc-1, argv+1};
     switch(check_for_early_out_args(&parser, &args)){
         case HELP:{
@@ -328,10 +329,10 @@ int main(int argc, const char** argv) {
                 columns = 80;
             print_argparse_help(&parser, columns);
             return 0;
-            }
+        }
         default:
             break;
-        }
+    }
     auto parse_e = parse_args(&parser, &args, ARGPARSE_FLAGS_UNKNOWN_KWARGS_AS_ARGS);
     if(parse_e){
         print_argparse_error(&parser, parse_e);
@@ -364,7 +365,7 @@ int main(int argc, const char** argv) {
         }
         return 0;
     }
-    StringBuilder sb = {};
+    StringBuilder sb = {0};
     for(int i = 0; i < pos_args[0].num_parsed; i++){
         sb_write_str(&sb, " ", 1);
         sb_write_str(&sb, dice_strings[i].text, dice_strings[i].length);

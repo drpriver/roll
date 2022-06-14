@@ -1,15 +1,21 @@
-.PHONY: release-build debug-build
-debug-build: | debug
-	ninja -C debug
-release-build: | release
-	ninja -C release
+Bin: ; mkdir -p $@
+Deps: ; mkdir -p $@
+DEBUG=
+OPT=-O3
 
-debug:
-	meson setup debug --buildtype debug
-release:
-	meson setup release --buildtype release
-install: | release
-	ninja -C release install
-clean: | debug release
-	ninja -C release clean
-	ninja -C debug clean
+DEPFILES:= $(wildcard Deps/*.dep)
+include $(DEPFILES)
+
+Bin/roll: roll/roll.c | Deps Bin
+	$(CC) $< -o $@ -MT $@ -MD -MP -MF Deps/roll.dep $(OPT) $(DEBUG)
+
+README.html: README.md README.css
+	pandoc README.md README.css -f markdown -o $@ -s --toc
+
+.PHONY: clean
+clean:
+	rm -rf Bin/*
+.PHONY: all
+all: Bin/roll
+
+.DEFAULT_GOAL:=all

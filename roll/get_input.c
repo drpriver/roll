@@ -167,7 +167,7 @@ write_data(const char*buff, size_t len){
 #else
     return write(STDOUT_FILENO, buff, len);
 #endif
-    }
+}
 
 static inline
 Nullable(void*)
@@ -254,7 +254,7 @@ get_line_internal(struct LineHistory* history, char* buff, size_t buffsize, Long
     ssize_t result_length = get_line_internal_loop(history, buff, buffsize, prompt);
     disable_raw(&termstate);
     return result_length;
-    }
+}
 
 
 static
@@ -329,10 +329,10 @@ get_line_internal_loop(struct LineHistory* history, char* buff, size_t buffsize,
                     // TODO: delete right
                     delete_right(&ls);
                     redisplay(&ls);
-                    }
+                }
                 else {
                     return -1;
-                    }
+                }
                 break;
             case CTRL_T:
                 DBG("CTRL_T\n");
@@ -434,8 +434,8 @@ get_line_internal_loop(struct LineHistory* history, char* buff, size_t buffsize,
                             ls.curr_pos = ls.length;
                             redisplay(&ls);
                             break;
-                        }
                     }
+                }
                 break;
             default:
                 DBG("default ('%c')\n", c);
@@ -545,22 +545,22 @@ redisplay(struct LineState*ls){
         DBG("buff: '%.*s'\n", (int)len, buff);
         memcpy(seq+seq_pos, buff, len);
         seq_pos += len;
-        }
+    }
     else {
         DBG("seq_pos + len >= LINESIZE\n");
         return;
-        }
+    }
     // Erase anything remaining on this line to the right.
     #define ERASERIGHT "\x1b[0K"
     if(seq_pos + sizeof(ERASERIGHT)-1 < LINESIZE){
         DBG("seq_pos: %d\n", seq_pos);
         memcpy(seq+seq_pos, ERASERIGHT, sizeof(ERASERIGHT)-1);
         seq_pos += sizeof(ERASERIGHT)-1;
-        }
+    }
     else {
         DBG("seq_pos + sizeof(ERASERIGHT)-1 >= LINESIZE\n");
         return;
-        }
+    }
     #undef ERASERIGHT
     // Move cursor back to original position.
     DBG("seq_pos: %d\n", seq_pos);
@@ -570,7 +570,7 @@ redisplay(struct LineState*ls){
     if(printsize > LINESIZE-seq_pos){
         DBG("printsize > LINESIZE-seq_pos\n");
         return;
-        }
+    }
     else
         seq_pos += printsize;
     // Actually write to the terminal.
@@ -599,12 +599,12 @@ insert_char_into_line(struct LineState* ls, char c){
         ls->buff[ls->curr_pos++] = c;
         ls->buff[++ls->length] = '\0';
         return;
-        }
+    }
     // Write into the middle of the buffer
     memmove(ls->buff+ls->curr_pos+1,ls->buff+ls->curr_pos,ls->length-ls->curr_pos);
     ls->buff[ls->curr_pos++] = c;
     ls->buff[++ls->length] = '\0';
-    }
+}
 
 static
 void
@@ -624,11 +624,11 @@ add_line_to_history(struct LineHistory* history, LongString ls){
             .length = ls.length,
             .text = copy,
             };
-        }
+    }
     else {
         history->history[history->count++] = (LongString){.length=ls.length, .text=copy};
-        }
     }
+}
 
 
 static
@@ -646,7 +646,7 @@ change_history(struct LineHistory*history, struct LineState* ls, int magnitude){
         ls->curr_pos = 0;
         ls->buff[ls->length] = '\0';
         return;
-        }
+    }
     if(history->cursor < 0)
         return;
     LongString old = history->history[history->cursor];
@@ -656,7 +656,7 @@ change_history(struct LineHistory*history, struct LineState* ls, int magnitude){
     ls->buff[length] = '\0';
     ls->length = length;
     ls->curr_pos = length;
-    }
+}
 static void get_line_init(void){
     get_line_is_init = true;
 #ifdef _WIN32
@@ -686,7 +686,7 @@ static void get_line_init(void){
     fputs(SHOW_CURSOR, stdout);
     fflush(stdout);
 #undef SHOW_CURSOR
-    }
+}
 
 static int
 get_cols(void){
@@ -708,7 +708,7 @@ get_cols(void){
 
 failed:
     return 80;
-    }
+}
 static
 void
 get_history_filename(char (*buff)[1024]){
@@ -721,15 +721,14 @@ get_history_filename(char (*buff)[1024]){
             );
     if(!success){
         return;
-        }
+    }
     strcat(*buff, "\\.dicehistory");
 #else
     const char* home = getenv("HOME");
     if(home)
         snprintf(*buff, sizeof(*buff), "%s/.dicehistory", home);
 #endif
-
-    }
+}
 
 static
 int
@@ -742,11 +741,11 @@ dump_history(struct LineHistory* history){
     for(int i = 0; i < history->count; i++){
         fwrite(history->history[i].text, history->history[i].length, 1, fp);
         fputc('\n', fp);
-        }
+    }
     fflush(fp);
     fclose(fp);
     return 0;
-    }
+}
 
 static
 int
@@ -756,11 +755,11 @@ load_history(struct LineHistory* history){
     FILE* fp = fopen(filename, "r");
     if(!fp){
         return 1;
-        }
+    }
     char buff[1024];
     for(int i = 0; i < history->count; i++){
         free((char*)history->history[i].text);
-        }
+    }
     history->count = 0;
     while(fgets(buff, sizeof(buff), fp)){
         size_t length = strlen(buff);
@@ -771,9 +770,9 @@ load_history(struct LineHistory* history){
         LongString* h = &history->history[history->count++];
         h->text = copy;
         h->length = length;
-        }
-    return 0;
     }
+    return 0;
+}
 
 #ifdef __clang__
 #pragma clang assume_nonnull end
